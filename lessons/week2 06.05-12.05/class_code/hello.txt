@@ -1,0 +1,4 @@
+Hello my friend
+Hello world
+Python is fun
+Hello everyone
