@@ -1,0 +1,34 @@
+
+--- TITANIC PASSENGER TICKET ---
+Name: Gresha
+Age: 82.0
+Sex: female
+Fare: 100.0$
+Class: 1
+Ticket Number: 118603
+-------------------------------
+Dear Gresha, your chances to die on our trip are 3.8%.
+Enjoy your trip ☺
+
+
+--- TITANIC PASSENGER TICKET ---
+Name: Momi
+Age: 36.0
+Sex: male
+Fare: 512.0$
+Class: 1
+Ticket Number: 198376
+-------------------------------
+Dear Momi, your chances to die on our trip are 64.9%.
+Enjoy your trip ☺
+
+--- TITANIC PASSENGER TICKET ---
+Name: Boba
+Age: 22.0
+Sex: female
+Fare: 87.0$
+Class: 1
+Ticket Number: 969419
+-------------------------------
+Dear Boba, your chances to die on our trip are 3.8%.
+Enjoy your trip ☺
