@@ -1,0 +1,23 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/about.css') }}">
+    <meta charset="UTF-8">
+    <title>About</title>
+</head>
+<body>
+    <h2>About page</h2>
+</body>
+</html> -->
+{% extends "base.html" %}
+
+{% block title %}About{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/about.css') }}">
+{% endblock %}
+
+{% block content %}
+  <h1>About page</h1>
+  <p>This is the about page of the Flask app.</p>
+{% endblock %}
