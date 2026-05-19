@@ -285,11 +285,9 @@ def retrieve(query, index, chunks, k=TOP_K):
 # ==========================================================
 # GEMINI LLM
 # ==========================================================
-
-def ask_gemini(context, question):
+def ask_gemini(context, question, max_retries=5):
     """
-    Gemini is the LLM.
-    Hugging Face is only used for embeddings.
+    Sends the context and question to Gemini with retries.
     """
 
     prompt = f"""
@@ -313,19 +311,76 @@ Question:
 Answer:
 """
 
-    response = gemini_client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            temperature=0.3,
-            max_output_tokens=500,
-            thinking_config=types.ThinkingConfig(
-                thinking_budget=0
-            )
-        )
-    )
+    for attempt in range(1, max_retries + 1):
 
-    return response.text.strip()
+        try:
+            response = gemini_client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.3,
+                    max_output_tokens=500,
+                    thinking_config=types.ThinkingConfig(
+                        thinking_budget=0
+                    )
+                )
+            )
+
+            return response.text.strip()
+
+        except Exception as e:
+            print(f"\nGemini request failed. Attempt {attempt}/{max_retries}")
+            print("Error:", e)
+
+            if attempt == max_retries:
+                raise
+
+            wait_seconds = attempt * 3
+
+            print(f"Retrying in {wait_seconds} seconds...")
+
+            time.sleep(wait_seconds)
+            
+# def ask_gemini(context, question):
+#     """
+#     Gemini is the LLM.
+#     Hugging Face is only used for embeddings.
+#     """
+
+#     prompt = f"""
+# You are a helpful RAG assistant.
+
+# Use the provided context to answer the user's question.
+
+# Rules:
+# 1. First answer using only the provided context.
+# 2. If the context does not contain enough information, say:
+#    "I do not have enough information in the documents, but based on general knowledge..."
+# 3. Keep the answer simple and clear.
+# 4. Do not invent facts from the documents.
+
+# Context:
+# {context}
+
+# Question:
+# {question}
+
+# Answer:
+# """
+
+#     response = gemini_client.models.generate_content(
+#         model=GEMINI_MODEL,
+#         contents=prompt,
+#         config=types.GenerateContentConfig(
+#             temperature=0.3,
+#             max_output_tokens=500,
+#             thinking_config=types.ThinkingConfig(
+#                 thinking_budget=0
+#             )
+#         )
+#     )
+
+#     return response.text.strip()
 
 
 # ==========================================================

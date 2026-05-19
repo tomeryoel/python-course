@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}RAG Chat{% endblock %}
+
+{% block content %}
+  <section class="chat-page">
+   <div class="chat-header">
+
+  <div>
+    <h1>RAG Chat Assistant</h1>
+
+    <p>
+      Ask a question about the local document inside the data folder.
+    </p>
+  </div>
+
+  <button id="clear-btn">
+    Clear Chat
+  </button>
+
+</div>
+
+    <div id="chat-box" class="chat-box">
+      <div class="message assistant-message">
+        Hello! I am your RAG assistant. Ask me something about your document.
+      </div>
+    </div>
+
+    <form id="chat-form" class="chat-form">
+      <input
+        type="text"
+        id="question-input"
+        placeholder="Type your question here..."
+        autocomplete="off"
+      >
+
+      <button type="submit">Send</button>
+    </form>
+  </section>
+
+  <script src="{{ url_for('static', filename='code_js/chat.js') }}"></script>
+{% endblock %}
