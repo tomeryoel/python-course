@@ -1,0 +1,61 @@
+SQL injection (SQLi) is a type of attack that uses malicious SQL code to manipulate a database and access sensitive information. A successful attack allows hackers to bypass authentication, steal data, and gain root access to the system. What is SQL injection, is your site at risk, and how can it be prevented?
+
+What is SQL injection?
+SQL is a simple language that relies on recognizable English words for its queries. If a site hasn’t been properly secured, a hacker could “inject” their own SQL commands and perform any malicious action from impersonating a user account to completely compromising the respective database or server.
+
+This involves tricking a website into creating SQL strings that contain the hacker’s commands. When the string is sent to the database and interpreted, the DBMS will read the “injected” commands as actionable instructions, and then carry them out. In this way, a hacker can compromise the DBMS to return information that the site’s owner might otherwise have kept private.
+
+For example, imagine a scenario in which someone wants to steal customer usernames and passwords from an online store. If the site’s security does not reflect best practices, a hacker could utilize certain site functions, such as search, and type in arbitrary commands, which would then be combined into the resulting SQL string.
+
+An SQL injection attack can affect any SQL database, such as Oracle, MySQL, MSSQL, or Microsoft SQL Server.
+What are SQL queries?
+Most actions you need to perform on a database are done with SQL statements. The most common one is the SELECT statement, which returns data based on specific criteria. There are many different statements in SQL (often referred as SQL commands) the database recognizes. Statements are used to control transactions, program flow, connections, sessions, or diagnostics.
+
+Types of SQL injection
+SQL injection attacks are categorized by methods threat actors use to gain access to a database.
+
+In-band SQLi (Classic SQLi)
+In-band SQLi is the most common type of SQL injection attack and also one of easiest to perform. A cybercriminal uses the same channel to launch an attack and to extract the results. There are two main types of in-band SQLi attacks: error-based SQLi and union-based SQLi.
+
+Error-based SQLi
+As the name suggests, error-based SQL injection attacks trigger the database to generate an error, which can contain a lot of sensitive information about its data structure. Using information provided by an error, attackers can modify the SQL query for further exploitation.
+
+Union-based SQLi
+Union-based SQLi uses the UNION operator to combine the results of multiple SELECT statements into one output, which is then returned along with the HTTP response.
+
+Inferential SQLi (Blind SQLi)
+In this type of SQL injection attack, a threat actor can’t directly see the response of injected queries (that’s why it’s also called a blind SQLi). However, they can observe the application’s behavior and reconstruct its structure.
+
+Inferential SQL injection has two types: blind-boolean-based SQLi and blind-time-based SQLi.
+
+Boolean-based (content-based) blind SQLi
+An attacker sends various SQL queries that trigger TRUE or FALSE responses.
+
+Time-based blind SQLi
+A time-based blind SQLi attack is a technique in which an attacker sends queries to the SQL database and forces it to wait for a certain time before responding. If a website doesn’t respond immediately, it indicates that it’s vulnerable to blind SQL injection attacks.
+
+Out-of-band SQLi
+An out-of-band SQLi attack is an exploitation that allows hackers to exfiltrate data through DNS or HTTP channels.
+
+SQL injection example
+A great example of this would be the UNION command, which can be used to add additional "sub-queries" to the user’s main query. Those sub-queries can force a database to return additional information along with the legitimate search results.
+
+Using this method, a hacker could access the table that contains customer emails, usernames or passwords. From an initial SQL injection vulnerability, it’s a short step to cracking into user accounts, stealing sensitive information, and even seizing administrative control of the site itself.
+
+What can an SQL hacker steal?
+If the site hasn’t been properly protected, there’s really no limit to the amount of data a hacker could access with SQL injections. Almost anything located in the database is fair game.
+
+Using simple SQL commands, they can force the database to return a full list of all the tables it contains. That gives them a roadmap to every subsection of the database so they can request any information they want.
+
+How to prevent SQL injection
+Data segregation
+The more centralized your data is, the worse an SQL attack can be. In the example of the online store, the hack is only really damaging because sensitive user data is kept in the same database as the product tables. Segregating information across different databases keeps the potential damage to a minimum.
+
+Prepared statements
+One of the best strategies to prevent SQL injection is the implementation of Prepared Statements. A high-risk site will generate a fresh SQL query every time someone sends a request, giving hackers the opportunity to inject their own code.
+
+Avoid this by programming your site to use premade SQL templates, with fixed values and a question mark where the keyword would normally appear. Your DBMS can be coded to read that question mark as whatever data is in the search bar, but the query itself is created in advance. With a prepared statement, a hacker will be unable to add any new commands to the string.
+
+Input Validation
+Input validation (a.k.a. sanitization) should be built into a website’s backend, with a white-list of accepted characters and words. The white-list can be updated whenever new searchable items are added to the database. If a hacker “searches” for a malicious coding command, the system will check the input data against its white-list. When it fails to find a valid input match, it won’t run the code, and will just return a “no results” message.
+

@@ -40,7 +40,12 @@ TOP_K = 3
 
 # Start with 1 to avoid connection problems.
 # Later you can try 4 or 8.
-BATCH_SIZE = 1
+BATCH_SIZE = 16
+
+
+INDEX_FILE = "faiss_index.bin"
+CHUNKS_FILE = "chunks.npy"
+EMBEDDINGS_FILE = "embeddings.npy"
 
 
 # ==========================================================
@@ -285,7 +290,11 @@ def retrieve(query, index, chunks, k=TOP_K):
 # ==========================================================
 # GEMINI LLM
 # ==========================================================
-def ask_gemini(context, question, max_retries=5):
+def ask_gemini(context, question, max_retries=3):
+
+# Don't forget to delete this return line:
+    return "Gemini is temporarily disabled."
+
     """
     Sends the context and question to Gemini with retries.
     """
@@ -297,10 +306,12 @@ Use the provided context to answer the user's question.
 
 Rules:
 1. First answer using only the provided context.
-2. If the context does not contain enough information, say:
-   "I do not have enough information in the documents, but based on general knowledge..."
+2. If the context does not contain enough information,  respond exactly with:
+   "I do not have enough information in the provided documents."
 3. Keep the answer simple and clear.
 4. Do not invent facts from the documents.
+5. Do NOT use external knowledge.
+6. Do NOT make up information.
 
 Context:
 {context}
@@ -333,14 +344,14 @@ Answer:
             print("Error:", e)
 
             if attempt == max_retries:
-                raise
+                  return "Gemini API quota was exceeded. Please try again later."
 
             wait_seconds = attempt * 3
 
             print(f"Retrying in {wait_seconds} seconds...")
 
             time.sleep(wait_seconds)
-            
+
 # def ask_gemini(context, question):
 #     """
 #     Gemini is the LLM.
@@ -391,16 +402,54 @@ Answer:
 # RAG ENGINE FOR FLASK
 # ==========================================================
 
+# setup_nltk()
+
+# print("Loading documents...")
+# chunks = load_documents(DATA_FOLDER)
+
+# print("\nCreating Hugging Face cloud embeddings...")
+# document_embeddings = embed_texts_with_huggingface(chunks)
+
+# print("\nCreating FAISS index...")
+# index = create_faiss_index(document_embeddings)
+
+# print("\nRAG engine is ready for Flask.")
+
 setup_nltk()
 
-print("Loading documents...")
-chunks = load_documents(DATA_FOLDER)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-print("\nCreating Hugging Face cloud embeddings...")
-document_embeddings = embed_texts_with_huggingface(chunks)
+INDEX_PATH = os.path.join(BASE_DIR, INDEX_FILE)
+CHUNKS_PATH = os.path.join(BASE_DIR, CHUNKS_FILE)
+EMBEDDINGS_PATH = os.path.join(BASE_DIR, EMBEDDINGS_FILE)
 
-print("\nCreating FAISS index...")
-index = create_faiss_index(document_embeddings)
+if os.path.exists(INDEX_PATH) and os.path.exists(CHUNKS_PATH):
+    print("Loading existing FAISS index and chunks from disk...")
+
+    index = faiss.read_index(INDEX_PATH)
+    chunks = np.load(CHUNKS_PATH, allow_pickle=True).tolist()
+
+    print(f"Loaded FAISS index with {index.ntotal} vectors.")
+    print(f"Loaded {len(chunks)} chunks.")
+
+else:
+    print("No saved index found. Building RAG index from documents...")
+
+    print("Loading documents...")
+    chunks = load_documents(DATA_FOLDER)
+
+    print("\nCreating Hugging Face cloud embeddings...")
+    document_embeddings = embed_texts_with_huggingface(chunks)
+
+    print("\nCreating FAISS index...")
+    index = create_faiss_index(document_embeddings)
+
+    print("\nSaving FAISS index and chunks to disk...")
+    faiss.write_index(index, INDEX_PATH)
+    np.save(CHUNKS_PATH, np.array(chunks, dtype=object))
+    np.save(EMBEDDINGS_PATH, document_embeddings)
+
+    print("Saved index files successfully.")
 
 print("\nRAG engine is ready for Flask.")
 

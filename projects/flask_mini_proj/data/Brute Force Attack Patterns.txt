@@ -1,0 +1,55 @@
+If hackers want to get your password, they might use a relentless password cracking method — a brute force attack. No online account, device, or computer system is safe from these attacks unless you maximize your password security.
+
+What is a brute force attack?
+Brute-force attack definition
+A brute-force attack is a rapid trial-and-error approach to guess the correct password, PIN, or encryption keys to gain access to any password-protected account, platform, or system or to decrypt password-protected data.
+
+This kind of cyberattack does not require a high level of technical know-how — tools and software are readily available that automate the process. However, cracking complex passwords typically requires significant computing power and time because a vast number of possible combinations must be tested to find the correct one.
+
+Once the attackers crack your password, they can log in to your account, get hold of your private data, or infect your device or the whole computer system with malware. So how exactly do brute force attacks work?
+
+How brute force attacks work
+
+In a brute force attack, hackers systematically submit possible combinations of usernames and passwords to guess the correct one. Attackers often use this cyberattack to breach the networks and launch privilege escalation attacks. This trial-and-error approach can take an enormous amount of time. That’s why attackers employ specialized software that can try thousands of password combinations per second.
+
+Most websites add security steps such as password hashing and encryption to protect your information. This means that your passwords are never saved in plain text. So even if they do leak, hackers will need to go through an astronomical number of attempts to guess the encryption key and get your password. To do that, they execute different types of brute force attacks.
+
+Types of brute force attacks
+Hackers employ different types of brute force attacks to try all possible passwords to find the correct one. Here are the main types:
+
+Credential stuffing. In these attacks, hackers use usernames and passwords obtained from a data breach on one platform to try and log in to another platform. For example, if they get a hold of your Facebook login details, they might try to use them to access your bank account. Sometimes criminals simply buy leaked login data on the dark web.
+Dictionary attack. It’s a method of breaking into password-protected devices or networks by entering all possible passwords and combinations from a dictionary, including the most common passwords, such as “Password123.”
+Reverse brute force attack. This type of attack uses a reverse technique, where a hacker takes a popular password and tries it on as many accounts as they can. The hacker isn’t targeting a particular individual but rather looking for an opportunity to break into a random account.
+Hybrid brute force attack. In these attacks hackers try to crack passwords by combining the dictionary attack method with a brute force attack. They systematically try every possible combination of random characters but then increase the efficiency of their effort by also applying a list of predefined passwords and phrases.
+Rainbow table attack. It’s a password cracking method that involves comparing a target’s hashed password against a precomputed table with hashes for a large number of potential passwords. By quickly finding the corresponding plaintext password for a given hash, hackers can skip the time-consuming brute force attacks.
+Examples of brute force attacks
+Brute force attacks might affect companies and services that you use every day, exposing your login credentials. The largest attacks have been covered by the media, but here are the most notable ones in case you missed the news:
+
+In 2020, Nintendo reported that thousands of their Nintendo Switch user accounts were accessed by hackers who executed some sort of brute force attack, possibly a credential stuffing attack.
+In the same year, hackers used a phone spear phishing attack to gain access to Twitter’s internal systems. Then they likely used a brute force attack to access individual Twitter accounts, including those of prominent figures.
+In 2013, the web-based hosting service GitHub was hit by a massive brute force attack targeting user accounts. The attackers used almost 40,000 unique IP addresses to rapidly guess user credentials.
+Are brute force attacks illegal?
+Brute force attacks are illegal if you use them to crack a password in order to gain unauthorized access to an account or network and cause harm.
+
+Brute force attacks are only legal when authorized security professionals carry them out as part of legitimate penetration testing to evaluate the security of a system. If authorized and performed in a controlled environment, they are also legal for educational and research purposes.
+
+Protection from brute force attacks
+Protection from brute force attacks relies on password strength and protection. There are steps you can take to increase your password security, but there are also measures that website administrators should take to protect your passwords stored on their servers.
+
+Here’s what admins should be doing to avoid hackers cracking their users’ passwords with brute force attacks:
+
+Account locking after failed attempts. Locking accounts after a certain number of failed login attempts simply blocks an attacker’s access to an account after too many failed tries.
+Reducing login attempt rates. By limiting how frequently a user can attempt to log in, admins slow down attackers who try multiple password combinations quickly. Reducing login attempt rates also helps to detect potential brute force attacks and discourage attackers.
+Use CAPTCHA tests. These are tools for preventing automated bots from logging into accounts. CAPTCHAs include randomly generated sequences of letters or numbers, image identification, puzzles, solving math problems, and even interactive tasks like dragging and dropping items. They are easy for humans to solve but difficult for bots.
+Password encryption. Admins should make use of cryptography — they should apply encryption algorithms to convert plain text versions of passwords into unreadable formats using the 256-bit encryption technique. Even if a hacker has gained access to a password database, they would find encrypted data, useless without a decryption key.
+Using salt hashing algorithms, such as bcrypt. Hashing is a form of one-way encryption that transforms data into a fixed-size string of characters. Salting involves adding a unique, random string of characters (salt) to each password before it’s hashed. This ensures that even if two users have the same password, their hashed passwords will be different.
+How to improve password security
+Passwords security is key to protecting yourself from brute force attacks. Even though you cannot control the cybersecurity of the platforms you use, you can take the following steps to protect your accounts yourself by improving your password security:
+
+Use complex passwords. Replace your short, commonly used passwords with passwords of at least eight characters or longer, combining uppercase and lowercase letters, numbers, and symbols. To save yourself the trouble, use a reputable random password generator. The same goes for passphrases (check out our article on the difference between passwords and passphrases). Learn more on the topic in our blog post on choosing a secure password.
+Change your passwords regularly. This ensures that even if hackers compromise your password, it will only be valid for a limited time.
+Don’t reuse passwords on different accounts because this will make you vulnerable to credential stuffing attacks.
+Keep your passwords safe by using a reliable password manager like NordPass so you don’t have to rack your brain trying to remember all your passwords. NordPass keeps your passwords in an encrypted vault and offers extra features, such as autofill.
+Enable two-factor authentication (2FA) and multiple-factor authentication (MFA) for all your online accounts to prevent cybercriminals from gaining access even if they discover your password.
+Most importantly — don’t share your passwords with anyone else, because they are safe as long as they stay private.
+

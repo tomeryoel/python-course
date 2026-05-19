@@ -1,0 +1,93 @@
+In Fall of 2014, Sony Picture Entertainment became the victim of a massive phishing attack. The previous fall, hackers sent phishing emails to numerous top executives. These emails, which appeared to be from Apple, contained a link to a malicious domain. When victims visited this domain, they were prompted to enter their Apple ID information into an online form.
+
+
+The attackers then used these credentials to figure out employees’ login information. They also coded the credentials into the “Wiper” malware. These actions crippled the company’s network. Eventually, the criminals stole over 100 terabytes of sensitive company data. The attack cost Sony more than $100 million.
+
+
+Like Sony, many other high-profile organizations have been victims of phishing scams over the past decade, including Google and Facebook in the U.S., MacEwan University in Canada, and FACC and Crelan Bank in Europe.
+
+
+Phishing scams were particularly widespread in 2021, with a staggering 83% of organizations experiencing such attacks according to one report by Proofpoint. Moreover, in Q1 2022, the Anti-Phishing Working Group (APWG’s) Phishing Activity Trends Report reported over 1 million phishing scams – an all-time high in the report’s history. All these facts show that phishing is a widespread attack vector, and all organizations must protect themselves from this threat.
+
+
+This guide to phishing will take an in-depth look at what phishing is, how it works, the different types of phishing, and what organizations can do to mitigate their risk of becoming a victim of a phishing attempt. 
+
+
+What is Phishing?
+
+Phishing is a form of social engineering — often carried out via email — where attackers attempt to trick legitimate users into revealing sensitive information or performing an undesirable act. 
+
+
+For example, in a phishing scam, attackers may trick victims into clicking on a link that will direct them to a fake website. The website will ask them to enter sensitive information like login credentials. Other scams direct victims to download attachments that will infect their system with dangerous malware or ransomware.
+
+
+Unfortunately, any domain can become the victim of a phishing attack. This is because a large number of people reuse the same username and/or password across multiple websites.
+
+
+According to one 2019 Google Security Survey, 65% of people reused the same password for multiple or all accounts. Another problem is that many people – 64% according to this report – also continue using the same password, even after a breach.
+
+
+These poor cyber habits allow bad guys to spoof any site and access it using a single set of stolen credentials. They don’t even have to trick a user into logging into a fake site to get their password. As long as they can get their hands on one password that’s reused across websites, they can launch a wide-scale phishing attack and cause a lot of damage.
+
+
+Most phishing attacks arrive via fake email messages that pretend to be from a legitimate person or company. Attackers also use text messages, social media, or phone calls to achieve the same goal of accessing sensitive information or tricking users into downloading malware. 
+
+
+And the attack vectors don’t end there. In a 2021 survey, Ironscales found that one-third of IT professionals experienced phishing attacks via platforms for video conferencing, workforce messaging, and even file-sharing.
+
+How Does Phishing Work?
+
+According to the FBI’s 2020 Internet Crime Report, phishing was the most common cyberattack type in 2020. By 2021, it had emerged as the top concern of 90% of IT professionals, according to an Ironscales report.
+
+Modern phishing attacks have come a long way since the low-level “spray-and-pray” AOHell and Nigerian Prince scams. Many of today’s attackers use sophisticated schemes to target particular individuals or companies. They use skillful social engineering tactics to manipulate victims and steal their sensitive information.
+
+
+Clever scammers impersonate legitimate organizations, “spoof” their email addresses, and create emails that look as if they came from a real person from that organization. The fake emails may include a malicious attachment or link to spur activity from the victim. The link will lead to a fake site that appears legitimate and is designed to collect user credentials, financial information, or other sensitive data. In other cases, the email might include an attachment that infects the victim’s computer with malware.
+
+
+10 Classic Phishing Techniques
+
+Here’s how phishing typically works:
+
+
+Bait Creation: Phishers craft messages, usually emails, that appear legitimate and trustworthy. They often mimic well-known companies, government agencies, or organizations to trick recipients into thinking the communication is genuine.
+Social Engineering: Phishers use psychological tactics to manipulate recipients’ emotions and behavior. They may create a sense of urgency, curiosity, fear, or excitement to compel recipients to take immediate action without thinking.
+Deceptive Content: Phishing messages contain links or attachments that, when clicked or opened, lead to malicious websites or deliver malware. These links often appear valid but redirect to fake sites designed to steal login credentials or personal data.
+Spoofed Websites: Phishers create fake websites that closely resemble legitimate ones. These sites are designed to capture sensitive information entered by victims, thinking they are interacting with the genuine site.
+Credential Theft: Fake websites prompt victims to enter usernames and passwords. Once entered, this information is captured by the phisher, allowing unauthorized access to victims’ accounts.
+Malware Delivery: Phishing emails might include infected attachments. When opened, these attachments can install malware onto the victim’s device.
+Spear Phishing: In targeted attacks, phishers research their victims (often using social media) and craft highly personalized messages.
+Business Email Compromise (BEC): Phishers target businesses by posing as executives or employees, requesting financial transactions or sensitive information from colleagues.
+Vishing and Smishing: Phishing attacks can also occur over phone calls (vishing) or SMS messages (smishing), where attackers impersonate legitimate entities to extract information.
+Data Harvesting: Phishing campaigns aim to collect a large volume of personal data, which can then be sold on the dark web or used for identity theft, fraud, or further targeted attacks.
+
+Types of Phishing
+
+The most common types of phishing techniques include:
+
+
+Standard Email Phishing: The scammer sends numerous fake emails asking recipients to share their personal information or login credentials. These en masse attacks work very well in organizations with low phishing awareness.
+Spear Phishing: This attack targets specific individuals. Attackers present themselves as a genuine sender and send personalized emails to the target. Since the message includes specific details, it appears authentic, so the recipient has no reason not to trust the message or the sender.
+Whaling: A whaling attack targets the “big fish” such as C-suite executives. It involves sophisticated social engineering tactics to manipulate the victims into wiring large amounts of money into the attacker’s account.
+Business Email Compromise (BEC): The attacker sends fraudulent emails by spoofing a genuine account owner’s email address in order to steal money from the company.
+Malware Phishing: In a malware phishing attack, the attacker trick victims into downloading an attachment that will install malware on their devices.
+
+In recent years, many newer types of phishing scams have emerged, such as:
+
+
+Polymorphic Phishing Scams: Attackers make small changes to an email’s elements so signature-based email defense programs cannot detect or flag the message.
+Browser Hijacking: The scammer poisons search engine results so a user is redirected to a malicious site, allowing the former to generate fraudulent advertising revenue, collect user data, or log user keystrokes
+Dynamic Phishing with a Man-in-the-middle (MitM) Component: The attacker sends phishing emails with URLs pointing to an attacker-controlled server, which fools a victim into thinking they are on a legitimate company’s page.
+
+How to Mitigate Phishing Attacks
+
+Organizations can protect their people and information assets from phishing attempts by following these best practices:
+
+
+Implement email security software to block known malicious domains and antivirus software to scan all emails and attachments.
+Use training and phishing simulations to give employees a safe space to test their phishing knowledge.
+Ensure that users always use strong passwords and multi-factor authentication (MFA) to secure their accounts and devices.
+Discourage users from sharing or reusing passwords to minimize the possibility of credential compromise. These steps reduce the chances of credential stuffing and subsequent attacks and breaches if an account is compromised.
+Encourage users to use a password manager to securely store their passwords.
+Discourage users from opening emails and attachments from unknown or suspicious senders.
+Educate users on the “red flags” that are signs of a phishing attempt. 
