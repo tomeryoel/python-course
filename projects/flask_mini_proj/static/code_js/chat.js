@@ -2,6 +2,7 @@ const chatForm = document.getElementById("chat-form");
 const questionInput = document.getElementById("question-input");
 const chatBox = document.getElementById("chat-box");
 const clearBtn = document.getElementById("clear-btn");
+const retrievedContextBox = document.getElementById("retrieved-context");
 
 function addMessage(text, role) {
     const messageDiv = document.createElement("div");
@@ -36,6 +37,8 @@ chatForm.addEventListener("submit", async function (event) {
 
     addMessage("Thinking...", "assistant");
 
+    retrievedContextBox.textContent = "Retrieving relevant context...";
+
     try {
         const response = await fetch("/api/chat", {
             method: "POST",
@@ -54,16 +57,25 @@ chatForm.addEventListener("submit", async function (event) {
 
         if (!response.ok) {
             lastAssistantMessage.textContent = data.error || "Something went wrong.";
+            retrievedContextBox.textContent = "No context available because the request failed.";
             return;
         }
 
         lastAssistantMessage.textContent = data.answer;
+
+        if (data.retrieved_context) {
+            retrievedContextBox.textContent = data.retrieved_context;
+        } else {
+            retrievedContextBox.textContent = "No retrieved context returned.";
+        }
 
     } catch (error) {
         const thinkingMessages = document.querySelectorAll(".assistant-message");
         const lastAssistantMessage = thinkingMessages[thinkingMessages.length - 1];
 
         lastAssistantMessage.textContent = "Server error. Please try again.";
+        retrievedContextBox.textContent = "No context available because the server failed.";
+
         console.error(error);
     }
 });
@@ -74,6 +86,7 @@ clearBtn.addEventListener("click", async function () {
     });
 
     chatBox.innerHTML = "";
+    retrievedContextBox.textContent = "No retrieved context yet.";
 
     addMessage(
         "Conversation memory cleared.",

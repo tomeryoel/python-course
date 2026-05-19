@@ -4,25 +4,25 @@
 
 {% block content %}
   <section class="chat-page">
-   <div class="chat-header">
+    <div class="chat-header">
 
-  <div>
-    <h1>RAG Chat Assistant</h1>
+      <div>
+        <h1>Cybersecurity RAG Assistant</h1>
 
-    <p>
-      Ask a question about the local document inside the data folder.
-    </p>
-  </div>
+        <p>
+          Ask questions about the local cybersecurity knowledge base.
+        </p>
+      </div>
 
-  <button id="clear-btn">
-    Clear Chat
-  </button>
+      <button id="clear-btn">
+        Clear Chat
+      </button>
 
-</div>
+    </div>
 
     <div id="chat-box" class="chat-box">
       <div class="message assistant-message">
-        Hello! I am your RAG assistant. Ask me something about your document.
+        Hello! I am your cybersecurity RAG assistant. Ask me something about the documents.
       </div>
     </div>
 
@@ -30,12 +30,23 @@
       <input
         type="text"
         id="question-input"
-        placeholder="Type your question here..."
+        placeholder="Ask about risks, incidents, policies or response steps..."
         autocomplete="off"
       >
 
       <button type="submit">Send</button>
     </form>
+
+    <section class="retrieved-section">
+      <h2>Retrieved Context</h2>
+      <p class="retrieved-help">
+        These are the document chunks retrieved by FAISS for the latest question.
+      </p>
+
+      <pre id="retrieved-context" class="retrieved-context">
+No retrieved context yet.
+      </pre>
+    </section>
   </section>
 
   <script src="{{ url_for('static', filename='code_js/chat.js') }}"></script>
