@@ -293,7 +293,7 @@ def retrieve(query, index, chunks, k=TOP_K):
 def ask_gemini(context, question, max_retries=3):
 
 # Don't forget to delete this return line:
-    return "Gemini is temporarily disabled."
+    # return "Gemini is temporarily disabled."
 
     """
     Sends the context and question to Gemini with retries.
