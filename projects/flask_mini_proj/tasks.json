@@ -1,0 +1,112 @@
+[
+  {
+    "id": "task_001",
+    "title": "נשימת קופסה בוקר",
+    "description": "תרגיל נשימת קופסה 4-4-4-4, 4–5 דקות בבוקר לפי סיכום הפסיכולוגית.",
+    "category": "grounding",
+    "source": "סיכום ביקור פסיכולוגית 26.04.2026",
+    "frequency": "daily",
+    "time": "08:00",
+    "status": "open",
+    "safety_note": ""
+  },
+  {
+    "id": "task_002",
+    "title": "הליכה יומית 15 דקות",
+    "description": "הליכה קצרה של כ-15 דקות בסביבה 17:00 כמשימת ויסות.",
+    "category": "routine",
+    "source": "סיכום ביקור פסיכולוגית 17.05.2026",
+    "frequency": "daily",
+    "time": "17:00",
+    "status": "open",
+    "safety_note": ""
+  },
+  {
+    "id": "task_003",
+    "title": "נטילת ציפרלקס",
+    "description": "ציפרלקס 10 מ״ג בשעה 20:00 לפי הסיכום האחרון של הפסיכיאטר.",
+    "category": "medication",
+    "source": "סיכום ביקור פסיכיאטר 24.05.2026",
+    "frequency": "daily",
+    "time": "20:00",
+    "status": "open",
+    "safety_note": "לפי המסמכים בלבד ולא כהנחיה רפואית חדשה."
+  },
+  {
+    "id": "task_004",
+    "title": "ללא קפאין אחרי 14:00",
+    "description": "הימנעות מקפאין ומשקאות אנרגיה אחרי 14:00 לשיפור שינה.",
+    "category": "sleep",
+    "source": "סיכום ביקור פסיכיאטר 24.05.2026",
+    "frequency": "daily",
+    "time": "14:00",
+    "status": "open",
+    "safety_note": ""
+  },
+  {
+    "id": "task_005",
+    "title": "ללא מסכים מ-21:30",
+    "description": "הפסקת מסכים מ-21:30 לקראת שינה רגועה.",
+    "category": "sleep",
+    "source": "סיכום ביקור פסיכיאטר 03.05.2026",
+    "frequency": "daily",
+    "time": "21:30",
+    "status": "open",
+    "safety_note": ""
+  },
+  {
+    "id": "task_006",
+    "title": "קרקוע 5-4-3-2-1",
+    "description": "בזמן פלאשבק או טריגר רעש: 5 רואה, 4 נוגע, 3 שומע, 2 מריח, 1 טועם.",
+    "category": "grounding",
+    "source": "סיכום ביקור פסיכולוגית 05.04.2026",
+    "frequency": "as_needed",
+    "time": "",
+    "status": "open",
+    "safety_note": ""
+  },
+  {
+    "id": "task_007",
+    "title": "יומן רגשי ערב",
+    "description": "כתיבה קצרה של 5 דקות על הרגשות והאירועים של היום.",
+    "category": "routine",
+    "source": "סיכום ביקור פסיכולוגית 17.05.2026",
+    "frequency": "daily",
+    "time": "21:00",
+    "status": "open",
+    "safety_note": ""
+  },
+  {
+    "id": "task_008",
+    "title": "חוק שלושת העוגנים",
+    "description": "כל בוקר לבחור מקסימום 3 משימות עיקריות בלבד — שאר הרשימה מוקפאת.",
+    "category": "cognitive_load",
+    "source": "סיכום ביקור פסיכולוגית 26.04.2026",
+    "frequency": "daily",
+    "time": "09:00",
+    "status": "open",
+    "safety_note": ""
+  },
+  {
+    "id": "task_009",
+    "title": "בדיקת לוח פעמיים ביום",
+    "description": "לפתוח את המערכת רק בבוקר ובערב — לא כל שעה.",
+    "category": "cognitive_load",
+    "source": "סיכום ביקור פסיכולוגית 26.04.2026",
+    "frequency": "daily",
+    "time": "08:30",
+    "status": "open",
+    "safety_note": ""
+  },
+  {
+    "id": "task_010",
+    "title": "קלונקס SOS בלבד",
+    "description": "קלונקס 0.5 מ״ג רק במצב פאניקה חריפה/חירום, לא יומיומי, עד 3 פעמים בשבוע לפי מסמך הרופא.",
+    "category": "medication",
+    "source": "סיכום ביקור פסיכיאטר 24.05.2026",
+    "frequency": "as_needed",
+    "time": "",
+    "status": "open",
+    "safety_note": "לפי המסמכים בלבד ולא כהנחיה רפואית חדשה. אין להשתמש יומיומית."
+  }
+]

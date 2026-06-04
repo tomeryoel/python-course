@@ -1,18 +1,16 @@
-# Virtual environment
-.venv/
-
-# Python cache
+.env
 __pycache__/
 *.pyc
+.venv/
+chat_memory.db
+node_modules/
+dist/
+build/
+.pytest_cache/
+.DS_Store
 
 # Jupyter
 .ipynb_checkpoints/
-
-# OS
-.DS_Store
-
-.env
-**/.env
 
 *.db
 

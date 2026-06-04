@@ -1,289 +1,217 @@
-# Cybersecurity RAG Assistant
+# PTSD Companion
 
-## Project Overview
+עוזר דיגיטלי אישי לזיכרון טיפולי, עומס קוגניטיבי ומצבי מצוקה — מבוסס RAG על Amazon Bedrock Knowledge Base.
 
-This project is a Retrieval-Augmented Generation (RAG) web application built with Flask.
+## מטרת הפרויקט
 
-The system allows users to ask cybersecurity-related questions and receive grounded answers based on a local cybersecurity knowledge base. The application combines FAISS semantic retrieval with Google's Gemini LLM to generate context-aware responses.
+לאחר ביקור אצל פסיכולוג, פסיכיאטר או מטפל, מטופלים רבים מתקשים לזכור הנחיות, תזמון תרופות, כלי קרקוע ומשימות יומיות — במיוחד תחת סטרס.
 
-The project demonstrates a complete RAG pipeline including document preprocessing, embeddings generation, vector search, LLM integration, conversation memory, and a working web interface.
+**PTSD Companion** משמש "מוח חיצוני": שולף מידע מהמסמכים שהועלו, מציג משימות מעשיות ב-`tasks.json`, ועונה בעברית בטון רגוע ומעשי.
 
----
-
-## Topic
-
-The selected topic for this project is cybersecurity.
-
-The knowledge base focuses on common cyber threats and security concepts, including:
-
-- Brute force attacks
-- Ransomware
-- SQL injection
-- Phishing attacks
+> **הצהרה:** המערכת אינה מחליפה ייעוץ רפואי, פסיכיאטרי או פסיכולוגי. היא מציגה מידע על בסיס המסמכים שהועלו בלבד.
 
 ---
 
-## Main Features
+## נושא ומאגר מסמכים
 
-- Flask web application
-- HTML/CSS/JavaScript frontend
-- FAISS vector database
-- Hugging Face embeddings
-- Gemini LLM integration
-- Context-based response generation
-- SQLite conversation memory
-- Retrieved context display
-- Loading indicators
-- Basic error handling
-- Retry logic for Gemini API calls
+- **נושא:** ליווי מטופל עם PTSD / עומס קוגניטיבי / קשיי זיכרון טיפולי.
+- **6 מסמכים מדומים בעברית** (שמות ורישיונות פיקטיביים):
+  - 3× DOCX — סיכומי פסיכולוגיה (CBT, EMDR, קרקוע, עוגנים)
+  - 3× PDF — סיכומי פסיכיאטריה (תרופות, שינה, SOS)
+- תמיכה עתידית במסמכים באנגלית — תשובות בעברית כברירת מחדל.
 
 ---
 
-## Project Architecture
+## ארכיטקטורה
 
 ```text
-User Question
-↓
-Frontend Interface
-↓
-Flask Backend
-↓
-FAISS Semantic Retrieval
-↓
-Relevant Context
-↓
-Gemini LLM
-↓
-Generated Response
+Documents (S3)
+    ↓
+Amazon Bedrock Knowledge Base
+    ↓
+Flask + boto3 (retrieve + converse)
+    ↓
+React UI + tasks.json
+    ↓
+Docker → EC2 (גישה ציבורית לבדיקה)
 ```
 
----
+### זרימות מידע
 
-## Knowledge Base
-
-The knowledge base contains local cybersecurity-related `.txt` documents stored inside the `data/` folder.
-
-### Documents Used
-
-- `Brute Force Attack Patterns.txt`
-- `Ransomware Guide.txt`
-- `SQL Injection.txt`
-- `Understanding and Mitigating Phishing Attacks.txt`
-
-The content was collected from real cybersecurity educational resources and converted into local text files.
+1. **קלט:** הדבקת סיכום קליני → `/api/extract-tasks` → משימות ב-`tasks.json`
+2. **פלט:** שאלה בצ'אט → שליפה מ-KB + משימות פתוחות → תשובה בעברית
 
 ---
 
-## Chunking and Embeddings
+## שירותי AWS
 
-The documents are split into smaller sentence-based chunks before generating embeddings.
-
-Chunking improves semantic retrieval by allowing the system to retrieve only the most relevant parts of a document instead of entire files.
-
-The project uses Hugging Face embeddings to convert chunks into vector representations.
-
----
-
-## FAISS Vector Database
-
-FAISS is used to store and retrieve embeddings based on semantic similarity.
-
-The retrieval pipeline includes:
-
-1. Loading documents
-2. Splitting text into chunks
-3. Generating embeddings
-4. Creating a FAISS index
-5. Retrieving relevant chunks for user questions
-
-The FAISS index is cached locally to improve performance and avoid regenerating embeddings on every run.
+| שירות | שימוש |
+|--------|--------|
+| Bedrock Knowledge Base | אחסון ושליפת מסמכים |
+| bedrock-agent-runtime | `retrieve()` |
+| bedrock-runtime | `converse()` (Amazon Nova מומלץ) |
+| S3 | מקור מסמכים ל-KB |
+| EC2 | פריסת דמו ציבורי |
 
 ---
 
-## RAG Pipeline
+## התקנה מקומית
 
-The RAG pipeline works as follows:
+### דרישות
 
-1. The user submits a question.
-2. FAISS retrieves the most relevant chunks.
-3. Retrieved context is injected into the prompt.
-4. Gemini generates a grounded response.
-5. The response and retrieved context are displayed in the frontend.
+- Python 3.11+
+- Node.js 18+ (לבניית React)
+- חשבון AWS עם KB מסונכרן
 
-The model is instructed to answer only from the retrieved context in order to reduce hallucinations.
+### 1. משתני סביבה
 
-If the context does not contain enough information, the system responds with:
-
-```text
-I do not have enough information in the provided documents.
+```bash
+cp .env.example .env
 ```
 
----
+מלא: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `KNOWLEDGE_BASE_ID`, `BEDROCK_MODEL_ID=amazon.nova-lite-v1:0`
 
-## Retrieval Configuration
+### 2. Backend
 
-```python
-TOP_K = 3
-BATCH_SIZE = 16
+```bash
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+pip install -r requirements.txt
 ```
 
-- `TOP_K = 3` retrieves the three most relevant chunks.
-- `BATCH_SIZE = 16` is used during embedding generation.
+### 3. בדיקת RAG
 
----
-
-## Prompt Design
-
-The prompt instructs Gemini to answer only using the retrieved context and avoid using external knowledge.
-
-Example prompt structure:
-
-```text
-You are a helpful cybersecurity RAG assistant.
-
-Answer the user's question ONLY using the provided context.
-
-Rules:
-1. Use only the information found in the context.
-2. If the context does not contain enough information, respond exactly with:
-   "I do not have enough information in the provided documents."
-3. Do not use external knowledge.
-4. Do not make up information.
-5. Keep the answer simple and clear.
+```bash
+python rag_engine.py
 ```
 
----
+### 4. Frontend
 
-## Web Application
+```bash
+cd frontend
+npm install
+npm run build
+cd ..
+```
 
-The frontend was built using HTML, CSS, and JavaScript.
-
-The application includes:
-
-- Chat interface
-- User input field
-- Model response display
-- Retrieved context display
-- Loading indicators
-- Clear chat functionality
-
-Run locally:
+### 5. הרצת האפליקציה
 
 ```bash
 python app.py
 ```
 
-Open in browser:
+פתח: http://127.0.0.1:5000
 
-```text
-http://127.0.0.1:5000/chat
+פיתוח React נפרד (עם proxy):
+
+```bash
+cd frontend && npm run dev
 ```
 
 ---
 
-## Conversation Memory
+## API
 
-The application uses SQLite to store:
-
-- User messages
-- Assistant responses
-- Session identifiers
-
-This allows the assistant to maintain chat history during the active session.
-
----
-
-## Validation and Testing
-
-The system was tested using cybersecurity-related and irrelevant questions.
-
-### Example Questions
-
-```text
-How can organizations reduce the risk of phishing attacks?
-```
-
-```text
-What are the best ways to prevent SQL injection attacks?
-```
-
-```text
-What techniques can administrators use to protect users from brute force attacks?
-```
-
-```text
-What are common signs of a ransomware infection?
-```
-
-### Irrelevant Question Test
-
-```text
-Who won the FIFA World Cup in 2022?
-```
-
-Expected behavior:
-
-```text
-I do not have enough information in the provided documents.
-```
-
-This test verifies that the model does not rely on external knowledge when the retrieved context is irrelevant.
+| Method | Path | תיאור |
+|--------|------|--------|
+| GET | `/health` | סטטוס |
+| POST | `/api/chat` | `{"question": "..."}` |
+| GET/POST | `/api/tasks` | רשימה / הוספה |
+| PATCH/DELETE | `/api/tasks/<id>` | עדכון / מחיקה |
+| POST | `/api/extract-tasks` | `document_text`, `source_name` |
+| POST | `/api/clear` | ניקוי זיכרון שיחה |
 
 ---
 
-## Screenshots / Demo
+## Docker
 
-Screenshots of the application are included in the `screenshots/` folder.
-
-screenshots:
-
-```text
-screenshots/homepage.png
-screenshots/phishing_test.png
-screenshots/sql_injection_test.png
-screenshots/ransomware_test.png
-screenshots/irrelevant_question_test.png
+```bash
+docker build -t ptsd-companion .
+docker run -p 5000:5000 --env-file .env ptsd-companion
 ```
 
 ---
 
-## Error Handling
+## פריסה ל-EC2
 
-The project includes basic error handling for:
+1. הפעל EC2 (Amazon Linux / Ubuntu).
+2. התקן Docker.
+3. העתק את הפרויקט או `git clone`.
+4. צור `.env` על השרת (ללא commit).
+5. `docker build` + `docker run -p 5000:5000 --env-file .env`
+6. Security Group: פתח פורט **5000** (או 80 עם nginx).
+7. בדוק: `http://<PUBLIC_IP>:5000`
+8. צלם screenshots לגמר.
+9. **מחק** EC2, KB זמני, buckets בדיקה — למנוע עלויות.
 
-- Empty user input
-- Gemini API request failures
-- Retry attempts during failed requests
-
----
-
-## Performance Optimization
-
-To improve performance:
-
-- FAISS indexes are cached locally
-- Embeddings are reused between runs
-- Batch embedding generation is used
+רשום ב-README את ה-IP/URL שבו בדקת.
 
 ---
 
-## Possible Improvements
+## בדיקות אוטומטיות
 
-Future improvements could include:
+```bash
+pytest
+```
 
-- PDF document support
-- Better chunk overlap strategy
-- Improved retrieval ranking
-- Streaming responses
-- Multi-user support
-- Enhanced UI/UX
+(ללא קריאות AWS אמיתיות — עם mocking)
 
 ---
 
-## Reflection
+## שאלות לדוגמה לבדיקה ידנית
 
-This project provided hands-on experience with building a complete RAG application using FAISS, embeddings, semantic retrieval, and LLM integration.
+- מהם הסימפטומים המרכזיים של המטופל לפי המסמכים?
+- מה עושים בזמן טריגר של רעש חזק?
+- אני בסטרס עכשיו, מה לעשות?
+- מתי לקחת ציפרלקס? מה הקלונקס?
 
-One of the main challenges was ensuring that the model answered only from the retrieved context and did not rely on external knowledge.
+תרחישים A–E מוגדרים בממשק השיחה.
 
-Overall, the project demonstrates a complete end-to-end RAG system with a cybersecurity knowledge base, semantic retrieval, conversation memory, and a Flask web interface.
+---
+
+## רשימת Screenshots לגמר
+
+- [ ] Bedrock Knowledge Base בקונסול
+- [ ] Data source מסונכרן
+- [ ] `python rag_engine.py` מקומי
+- [ ] Flask / React מקומי
+- [ ] `docker run` עובד
+- [ ] EC2 instance
+- [ ] אפליקציה נגישה ב-IP ציבורי
+- [ ] לפחות שאלה ותשובה אחת מוצלחת
+
+---
+
+## ניקוי AWS (חובה אחרי הגשה)
+
+מחק או השבת:
+
+- EC2 instance
+- Elastic IP (אם הוקצה)
+- Knowledge Base / data source (אם נוצר לבדיקות בלבד)
+- S3 buckets זמניים
+
+זה מונע חיובים מיותרים.
+
+---
+
+## מבנה פרויקט
+
+```text
+app.py              # Flask API + SPA
+rag_engine.py       # Bedrock RAG
+tasks.py / tasks.json
+memory.py           # SQLite שיחה
+frontend/           # React (Vite)
+static/dist/        # build output
+tests/
+Dockerfile
+.env.example
+data/               # מסמכי דמו (מקור ל-KB)
+```
+
+---
+
+## רישיון / שימוש
+
+פרויקט סטודנטיאלי — מסמכים פיקטיביים. לא לשימוש קליני.

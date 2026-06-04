@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-navy-deep font-sans text-slate-100 antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(74, 143, 212, 0.18), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 10%, rgba(45, 106, 106, 0.12), transparent),
+      linear-gradient(165deg, #0a1220 0%, #0f1b2d 40%, #162436 100%);
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply rounded-2xl border border-glass-border bg-glass shadow-glass backdrop-blur-xl;
+  }
+
+  .glass-panel-strong {
+    @apply rounded-2xl border border-white/15 bg-glass-strong shadow-card backdrop-blur-xl;
+  }
+
+  .text-gradient-brand {
+    @apply bg-gradient-to-l from-accent-light to-white bg-clip-text text-transparent;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-deep;
+  }
+}
+
+@layer utilities {
+  .scrollbar-calm {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(74, 143, 212, 0.35) transparent;
+  }
+
+  .scrollbar-calm::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-calm::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-accent/40;
+  }
+}

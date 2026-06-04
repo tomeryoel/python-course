@@ -4,3 +4,10 @@ __pycache__
 .env
 .git
 .gitignore
+.pytest_cache
+node_modules
+frontend/node_modules
+screenshots
+*.db
+chat_memory.db
+agent-transcripts
