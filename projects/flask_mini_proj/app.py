@@ -10,8 +10,10 @@ import uuid
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory, session
 
+from documents import DocumentError, list_documents, save_upload
 from memory import clear_conversation, get_conversation_history, init_db, save_message
 from rag_engine import answer_question
+from response_utils import api_error, format_chat_response
 from tasks import (
     TasksError,
     TasksFileError,
@@ -58,10 +60,8 @@ def create_app() -> Flask:
         question = (data.get("question") or "").strip()
 
         if not question:
-            return jsonify({
-                "error": "נא להזין שאלה.",
-                "status": "error",
-            }), 400
+            body, code = api_error("נא להזין שאלה.", code=400)
+            return jsonify(body), code
 
         if len(question) > MAX_QUESTION_LENGTH:
             question = question[:MAX_QUESTION_LENGTH]
@@ -73,22 +73,17 @@ def create_app() -> Flask:
         try:
             result = answer_question(question=question, conversation_history=history)
         except ValueError as exc:
-            return jsonify({
+            return jsonify(format_chat_response({
                 "answer": str(exc),
                 "sources": [],
                 "retrieved_context": "",
                 "status": "error",
-            }), 503
+            }, question)), 503
 
-        answer = result.get("answer", "")
-        save_message(session_id, "assistant", answer)
+        formatted = format_chat_response(result, question)
+        save_message(session_id, "assistant", formatted.get("answer", ""))
 
-        return jsonify({
-            "answer": answer,
-            "sources": result.get("sources", []),
-            "retrieved_context": result.get("retrieved_context", ""),
-            "status": result.get("status", "success"),
-        })
+        return jsonify(formatted)
 
     @app.route("/api/clear", methods=["POST"])
     def api_clear():
@@ -100,7 +95,8 @@ def create_app() -> Flask:
         try:
             return jsonify({"tasks": get_all_tasks(), "status": "success"})
         except TasksFileError as exc:
-            return jsonify({"error": str(exc), "status": "error"}), 500
+            body, code = api_error(str(exc), code=500)
+            return jsonify(body), code
 
     @app.route("/api/tasks", methods=["POST"])
     def api_tasks_create():
@@ -109,9 +105,11 @@ def create_app() -> Flask:
             task = add_task(data)
             return jsonify({"task": task, "status": "success"}), 201
         except TasksError as exc:
-            return jsonify({"error": str(exc), "status": "error"}), 400
+            body, code = api_error(str(exc), code=400)
+            return jsonify(body), code
         except TasksFileError as exc:
-            return jsonify({"error": str(exc), "status": "error"}), 500
+            body, code = api_error(str(exc), code=500)
+            return jsonify(body), code
 
     @app.route("/api/tasks/<task_id>", methods=["PATCH"])
     def api_tasks_patch(task_id):
@@ -120,9 +118,11 @@ def create_app() -> Flask:
             task = update_task(task_id, data)
             return jsonify({"task": task, "status": "success"})
         except TasksError as exc:
-            return jsonify({"error": str(exc), "status": "error"}), 404
+            body, code = api_error(str(exc), code=404)
+            return jsonify(body), code
         except TasksFileError as exc:
-            return jsonify({"error": str(exc), "status": "error"}), 500
+            body, code = api_error(str(exc), code=500)
+            return jsonify(body), code
 
     @app.route("/api/tasks/<task_id>", methods=["DELETE"])
     def api_tasks_delete(task_id):
@@ -130,9 +130,11 @@ def create_app() -> Flask:
             delete_task(task_id)
             return jsonify({"message": "נמחק.", "status": "success"})
         except TasksError as exc:
-            return jsonify({"error": str(exc), "status": "error"}), 404
+            body, code = api_error(str(exc), code=404)
+            return jsonify(body), code
         except TasksFileError as exc:
-            return jsonify({"error": str(exc), "status": "error"}), 500
+            body, code = api_error(str(exc), code=500)
+            return jsonify(body), code
 
     @app.route("/api/extract-tasks", methods=["POST"])
     def api_extract_tasks():
@@ -140,7 +142,8 @@ def create_app() -> Flask:
         document_text = (data.get("document_text") or "").strip()
         source_name = (data.get("source_name") or "סיכום קליני").strip()
         if not document_text:
-            return jsonify({"error": "טקסט המסמך ריק.", "status": "error"}), 400
+            body, code = api_error("טקסט המסמך ריק.", code=400)
+            return jsonify(body), code
         try:
             added = extract_tasks_from_text(document_text, source_name)
             return jsonify({
@@ -149,11 +152,42 @@ def create_app() -> Flask:
                 "status": "success",
             })
         except TasksError as exc:
-            return jsonify({"error": str(exc), "status": "error"}), 400
+            body, code = api_error(str(exc), code=400)
+            return jsonify(body), code
         except ValueError as exc:
-            return jsonify({"error": str(exc), "status": "error"}), 503
-        except Exception as exc:
-            return jsonify({"error": str(exc), "status": "error"}), 500
+            body, code = api_error(str(exc), code=503)
+            return jsonify(body), code
+        except Exception:
+            body, code = api_error("שגיאה בחילוץ משימות. נסה שוב מאוחר יותר.", code=500)
+            return jsonify(body), code
+
+    @app.route("/api/documents", methods=["GET"])
+    def api_documents_list():
+        try:
+            docs = list_documents()
+            return jsonify({"documents": docs, "status": "success"})
+        except DocumentError as exc:
+            body, code = api_error(str(exc), code=500)
+            return jsonify(body), code
+
+    @app.route("/api/documents/upload", methods=["POST"])
+    def api_documents_upload():
+        if "file" not in request.files:
+            body, code = api_error("לא התקבל קובץ.", code=400)
+            return jsonify(body), code
+        try:
+            doc = save_upload(request.files["file"])
+            return jsonify({
+                "document": doc,
+                "message": "הקובץ נשמר. סנכרון ל-Knowledge Base יבוצע בהמשך.",
+                "status": "success",
+            }), 201
+        except DocumentError as exc:
+            body, code = api_error(str(exc), code=400)
+            return jsonify(body), code
+        except Exception:
+            body, code = api_error("שגיאה בהעלאת הקובץ. נסה שוב.", code=500)
+            return jsonify(body), code
 
     # --- React SPA ---
 

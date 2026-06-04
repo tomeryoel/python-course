@@ -18,26 +18,25 @@ export default function ChatPanel({
 }) {
   const { t } = useLocale();
   const bottomRef = useRef(null);
-  const containerRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-glass-border glass-panel-strong">
-      {/* Messages — dominant vertical space */}
-      <div
-        ref={containerRef}
-        className="scrollbar-calm min-h-[min(58vh,520px)] flex-1 overflow-y-auto px-4 py-16 md:min-h-[min(62vh,580px)] md:px-6 md:py-20"
-      >
-        <div className="flex min-h-full flex-col gap-4">
+    <section className="chat-panel-root" aria-label="חלון שיחה">
+      {/* 1. Messages — dominant scrollable region */}
+      <div className="chat-messages-region px-4 py-5 md:px-6 md:py-6">
+        <div className="flex flex-col gap-4">
           {messages.length === 0 && !loading && (
-            <EmptyState
-              icon={MessageSquare}
-              title={t("chatEmpty")}
-              className="my-auto border-0 bg-transparent"
-            />
+            <div className="flex flex-1 items-center justify-center py-8">
+              <EmptyState
+                icon={MessageSquare}
+                title={t("chatEmpty")}
+                description="העוזר משתמש במסמכים שהועלו ובמשימות הפתוחות שלך."
+                className="max-w-sm border-white/10 bg-white/[0.02]"
+              />
+            </div>
           )}
 
           {messages.map((msg, i) => (
@@ -50,21 +49,23 @@ export default function ChatPanel({
           ))}
 
           {loading && (
-            <div className="self-start rounded-2xl rounded-bl-md border border-glass-border bg-glass-strong px-4 py-3">
+            <div className="flex items-center gap-3 self-start rounded-2xl rounded-bl-md border border-white/10 bg-white/[0.06] px-4 py-3 shadow-inner-soft">
               <LoadingDots />
-              <span className="sr-only">{t("loading")}</span>
+              <span className="text-sm text-slate-400">{t("loading")}</span>
             </div>
           )}
-          <div ref={bottomRef} />
+          <div ref={bottomRef} className="h-px shrink-0" />
         </div>
       </div>
 
+      {/* 2. Error (between messages and input) */}
       {error && (
-        <div className="shrink-0 px-4 pb-2">
+        <div className="shrink-0 border-t border-white/8 px-4 py-3">
           <ErrorAlert message={error} />
         </div>
       )}
 
+      {/* 3. Input row — directly under messages */}
       <ChatInput
         value={input}
         onChange={onInputChange}
@@ -72,6 +73,6 @@ export default function ChatPanel({
         onClear={onClear}
         loading={loading}
       />
-    </div>
+    </section>
   );
 }

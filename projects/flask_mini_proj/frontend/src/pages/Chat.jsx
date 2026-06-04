@@ -6,12 +6,12 @@ import ExamplePrompts from "../components/chat/ExamplePrompts";
 import PageHeader from "../components/layout/PageHeader";
 import { useLocale } from "../context/LocaleContext";
 import { GENERAL_QUESTIONS, SCENARIO_PROMPTS } from "../data/examples";
-import { detectLocaleFromAnswer } from "../lib/i18n";
+import { detectLocaleFromAnswer, LOCALES } from "../lib/i18n";
 import { toUserMessage } from "../lib/errors";
 
 export default function Chat() {
   const location = useLocation();
-  const { setLocaleFromUserMessage, processAssistantAnswer, t } = useLocale();
+  const { setLocaleFromUserMessage, processAssistantAnswer, setLocale, t } = useLocale();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,10 +30,10 @@ export default function Chat() {
 
       try {
         const data = await sendChat(q);
-        const answerLocale = detectLocaleFromAnswer(
-          data.answer,
-          typeof userLocale === "string" ? userLocale : undefined
-        );
+        const answerLocale =
+          data.locale ||
+          detectLocaleFromAnswer(data.answer, userLocale);
+        setLocale(answerLocale === LOCALES.en ? LOCALES.en : LOCALES.he);
         const normalized = processAssistantAnswer(data.answer, answerLocale);
 
         setMessages((m) => [
@@ -51,7 +51,7 @@ export default function Chat() {
         setLoading(false);
       }
     },
-    [input, processAssistantAnswer, setLocaleFromUserMessage, t]
+    [input, processAssistantAnswer, setLocale, setLocaleFromUserMessage, t]
   );
 
   useEffect(() => {
@@ -68,13 +68,16 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] min-h-0 flex-col lg:h-[calc(100vh-5rem)]">
-      <PageHeader
-        title="שיחה עם העוזר"
-        subtitle="שאל על ההנחיות מהמסמכים — במצוקה, העוזר יתחיל במשפט מרגיע."
-      />
+    <div className="chat-page">
+      <div className="mx-auto w-full max-w-chat shrink-0">
+        <PageHeader
+          compact
+          title="שיחה עם העוזר"
+          subtitle="שאל על ההנחיות מהמסמכים — במצוקה, העוזר יתחיל במשפט מרגיע."
+        />
+      </div>
 
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="mx-auto flex w-full max-w-chat min-h-0 flex-1 flex-col gap-5">
         <ChatPanel
           messages={messages}
           loading={loading}

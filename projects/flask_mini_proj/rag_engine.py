@@ -390,10 +390,9 @@ class BedrockRagEngine:
                 "status": "error",
             }
 
-        if MEDICATION_KEYWORDS.search(question) or MEDICATION_KEYWORDS.search(answer):
-            disclaimer = "לפי המסמכים שהועלו בלבד, ולא כהנחיה רפואית חדשה…"
-            if disclaimer not in answer:
-                answer = f"{answer}\n\n{disclaimer}"
+        from response_utils import apply_medication_disclaimer, detect_locale
+
+        answer = apply_medication_disclaimer(answer, question, detect_locale(question))
 
         return {
             "answer": answer,

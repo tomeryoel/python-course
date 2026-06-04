@@ -1,3 +1,4 @@
+import io
 import json
 
 import pytest
@@ -209,6 +210,22 @@ def test_english_context_answered_in_hebrew(client, monkeypatch):
     res = client.post("/api/chat", json={"question": "What about morning routine?"})
     answer = res.get_json()["answer"]
     assert any("\u0590" <= c <= "\u05FF" for c in answer)
+
+
+def test_documents_upload_endpoint(client, tmp_path, monkeypatch):
+    upload_dir = tmp_path / "uploads"
+    registry = tmp_path / "registry.json"
+    monkeypatch.setattr("documents.UPLOAD_DIR", str(upload_dir))
+    monkeypatch.setattr("documents.REGISTRY_PATH", str(registry))
+
+    data = {"file": (io.BytesIO(b"%PDF-1.4 test"), "summary.pdf")}
+    res = client.post(
+        "/api/documents/upload",
+        data=data,
+        content_type="multipart/form-data",
+    )
+    assert res.status_code == 201
+    assert res.get_json()["document"]["type"] == "PDF"
 
 
 def test_stress_engine_without_aws(monkeypatch):
