@@ -1,46 +1,79 @@
+import { useCallback, useEffect, useState } from "react";
+import { fetchUploadedDocuments } from "../api";
+import DocumentUploadZone from "../components/documents/DocumentUploadZone";
+import UploadedDocumentsList from "../components/documents/UploadedDocumentsList";
+import PageHeader from "../components/layout/PageHeader";
+import { Card, CardHeader } from "../components/ui/Card";
+import Badge from "../components/ui/Badge";
 import { DEMO_DOCUMENTS } from "../data/examples";
 
 export default function Documents() {
+  const [uploaded, setUploaded] = useState([]);
+
+  const refresh = useCallback(() => {
+    fetchUploadedDocuments().then(setUploaded);
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
   return (
     <>
-      <h1 className="page-title">מסמכי המקור</h1>
-      <p className="page-sub">
-        שישה מסמכים קליניים מדומים בעברית — שמות ומספרי רישיון פיקטיביים.
-        התוכן הגולמי לא מוצג כאן מטעמי פרטיות.
-      </p>
+      <PageHeader
+        title="מסמכים ומקורות"
+        subtitle="בסיס הידע הקליני שלך מתעדכן לאחר כל ביקור — מסמכי הדמו + העלאות חדשות."
+      />
 
-      <div className="glass-card">
-        <h3>סוגי מסמכים</h3>
-        <p>
-          <strong>DOCX</strong> — סיכומי פסיכולוגיה: פרוטוקולים, CBT, EMDR, קרקוע, עומס
-          קוגניטיבי.
-        </p>
-        <p style={{ marginTop: "0.5rem" }}>
-          <strong>PDF</strong> — סיכומי פסיכיאטריה: תרופות, שינה, SOS, שינויי מינון.
-        </p>
-        <p style={{ marginTop: "0.75rem", color: "var(--gray)" }}>
-          המערכת תומכת בעתיד גם במסמכים באנגלית — התשובות ימשיכו בעברית כברירת מחדל.
-        </p>
-      </div>
+      <DocumentUploadZone onUploaded={refresh} />
 
-      <div className="grid-2">
-        {DEMO_DOCUMENTS.map((doc) => (
-          <div key={doc.name} className="glass-card">
-            <span className="chip">{doc.type}</span>
-            <span className="chip">{doc.role}</span>
-            <h3 style={{ marginTop: "0.5rem" }}>{doc.name}</h3>
-            <p style={{ color: "var(--gray)", fontSize: "0.9rem" }}>{doc.note}</p>
-          </div>
-        ))}
-      </div>
+      <Card className="mt-6">
+        <CardHeader
+          title="מסמכים שהועלו"
+          subtitle="היסטוריית העלאות וסטטוס סנכרון"
+        />
+        <UploadedDocumentsList documents={uploaded} />
+      </Card>
 
-      <div className="glass-card">
-        <h3>זרימת RAG</h3>
-        <p>
-          המסמכים הועלו ל-Amazon Bedrock Knowledge Base. בכל שאלה, המערכת שולפת קטעים
-          רלוונטיים ומייצרת תשובה מבוססת מסמכים בלבד.
-        </p>
-      </div>
+      <Card className="mt-6">
+        <CardHeader
+          title="מאגר הדמו (Knowledge Base)"
+          subtitle="שישה מסמכים פיקטיביים — תוכן גולמי לא מוצג מטעמי פרטיות"
+        />
+        <div className="mb-4 rounded-xl border border-accent/20 bg-accent/5 px-4 py-3 text-sm text-slate-300">
+          מסמכים חדשים שתעלה ישולבו יחד עם המסמכים הקיימים — המערכת תשתמש בכל
+          ההקשר הרפואי הזמין לתשובות והנחיות עתידיות.
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {DEMO_DOCUMENTS.map((doc) => (
+            <article
+              key={doc.name}
+              className="rounded-xl border border-glass-border bg-black/20 p-4 transition hover:border-accent/30"
+            >
+              <div className="mb-2 flex flex-wrap gap-2">
+                <Badge>{doc.type}</Badge>
+                <Badge category="routine">{doc.role}</Badge>
+              </div>
+              <h4 className="font-medium text-white">{doc.name}</h4>
+              <p className="mt-1 text-sm text-slate-400">{doc.note}</p>
+            </article>
+          ))}
+        </div>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader title="סוגי מסמכים" />
+        <div className="grid gap-4 text-sm text-slate-300 md:grid-cols-2">
+          <p>
+            <strong className="text-accent-light">DOCX</strong> — סיכומי פסיכולוגיה:
+            CBT, EMDR, קרקוע, עומס קוגניטיבי.
+          </p>
+          <p>
+            <strong className="text-accent-light">PDF</strong> — סיכומי פסיכיאטריה:
+            תרופות, שינה, SOS.
+          </p>
+        </div>
+      </Card>
     </>
   );
 }

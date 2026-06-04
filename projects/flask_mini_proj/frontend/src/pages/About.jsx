@@ -1,61 +1,60 @@
-import { DISCLAIMER } from "../data/examples";
+import { Brain } from "lucide-react";
+import PageHeader from "../components/layout/PageHeader";
+import { Card, CardHeader } from "../components/ui/Card";
+import { useLocale } from "../context/LocaleContext";
 
 export default function About() {
+  const { uiDisclaimer } = useLocale();
+
   return (
     <>
-      <h1 className="page-title">אודות הפרויקט</h1>
-      <p className="page-sub">פרויקט גמר — PTSD Companion</p>
+      <PageHeader title="אודות הפרויקט" subtitle="פרויקט גמר — PTSD Companion" />
 
-      <div className="glass-card">
-        <h3>מטרה</h3>
-        <p>
-          PTSD Companion הוא עוזר דיגיטלי אישי לזיכרון טיפולי, עומס קוגניטיבי ומצבי
-          מצוקה. הוא עוזר לזכור הנחיות מהפסיכולוג/פסיכיאטר, לבצע משימות יומיות, ולשאול
-          שאלות מבוססות מסמכים בלבד.
-        </p>
+      <div className="grid gap-5 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader title="מטרה" />
+          <p className="text-sm leading-relaxed text-slate-300">
+            PTSD Companion הוא עוזר דיגיטלי אישי לזיכרון טיפולי, עומס קוגניטיבי ומצבי
+            מצוקה. הוא עוזר לזכור הנחיות מהמטפלים, לבצע משימות יומיות, ולשאול שאלות
+            מבוססות מסמכים בלבד.
+          </p>
+        </Card>
+        <Card>
+          <Brain className="mb-3 h-8 w-8 text-accent-light" />
+          <p className="text-xs text-slate-500">זיכרון חיצוני מתמשך</p>
+        </Card>
       </div>
 
-      <div className="glass-card">
-        <h3>ארכיטקטורה</h3>
-        <pre
-          style={{
-            background: "rgba(0,0,0,0.25)",
-            padding: "1rem",
-            borderRadius: "10px",
-            overflow: "auto",
-            fontSize: "0.85rem",
-            direction: "ltr",
-            textAlign: "left",
-          }}
-        >
+      <Card className="mt-5">
+        <CardHeader title="ארכיטקטורה" />
+        <pre className="overflow-x-auto rounded-xl border border-glass-border bg-black/30 p-4 text-left text-xs leading-relaxed text-slate-400" dir="ltr">
 {`Documents → Bedrock Knowledge Base
          ↓
     Flask + boto3 (RAG + tasks API)
          ↓
-    React UI + tasks.json
+    React + Tailwind + tasks.json
          ↓
-    Docker → EC2 (public demo)`}
+    Docker → EC2`}
         </pre>
-      </div>
+      </Card>
 
-      <div className="glass-card">
-        <h3>שירותי AWS</h3>
-        <ul style={{ paddingRight: "1.25rem" }}>
+      <Card className="mt-5">
+        <CardHeader title="שירותי AWS" />
+        <ul className="list-inside list-disc space-y-1 text-sm text-slate-300">
           <li>Amazon Bedrock Knowledge Base</li>
           <li>bedrock-agent-runtime (retrieve)</li>
-          <li>bedrock-runtime (converse — Amazon Nova)</li>
-          <li>S3 — אחסון מסמכי המקור</li>
-          <li>EC2 — פריסה ציבורית לבדיקה</li>
+          <li>bedrock-runtime (converse)</li>
+          <li>S3 + EC2 לפריסה</li>
         </ul>
-      </div>
+      </Card>
 
-      <div className="glass-card">
-        <h3>הצהרה רפואית</h3>
-        <p>{DISCLAIMER}</p>
-        <p style={{ marginTop: "0.5rem", color: "var(--gray)" }}>
-          זהו דמו סטודנטיאלי עם מסמכים פיקטיביים — לא לשימוש קליני אמיתי.
+      <Card className="mt-5 border-amber-400/20">
+        <CardHeader title="הצהרה רפואית" />
+        <p className="text-sm text-slate-300">{uiDisclaimer}</p>
+        <p className="mt-3 text-xs text-slate-500">
+          דמו סטודנטיאלי עם מסמכים פיקטיביים — לא לשימוש קליני אמיתי.
         </p>
-      </div>
+      </Card>
     </>
   );
 }

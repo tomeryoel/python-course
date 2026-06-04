@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ClipboardList } from "lucide-react";
 import {
   createTask,
   extractTasks,
@@ -6,7 +7,23 @@ import {
   patchTask,
   removeTask,
 } from "../api";
+import TaskCard from "../components/tasks/TaskCard";
+import TaskProgress from "../components/tasks/TaskProgress";
+import PageHeader from "../components/layout/PageHeader";
+import { Card, CardHeader } from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import EmptyState from "../components/ui/EmptyState";
+import ErrorAlert from "../components/ui/ErrorAlert";
+import { SkeletonCard } from "../components/ui/Skeleton";
 import { CATEGORY_LABELS } from "../data/examples";
+import { toUserMessage } from "../lib/errors";
+import { useLocale } from "../context/LocaleContext";
+import { cn } from "../lib/cn";
+
+const inputClass = cn(
+  "w-full rounded-xl border border-glass-border bg-black/25 px-3 py-2 text-sm text-slate-100",
+  "placeholder:text-slate-500 focus-ring"
+);
 
 const emptyForm = {
   title: "",
@@ -17,7 +34,8 @@ const emptyForm = {
 };
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState([]);
+  const { t } = useLocale();
+  const [tasks, setTasks] = useState(null);
   const [error, setError] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [extractText, setExtractText] = useState("");
@@ -27,21 +45,24 @@ export default function Tasks() {
   const load = () =>
     fetchTasks()
       .then(setTasks)
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(toUserMessage(e, t)));
 
   useEffect(() => {
     load();
   }, []);
 
-  const open = tasks.filter((t) => t.status === "open");
-  const done = tasks.filter((t) => t.status === "done");
-  const progress = tasks.length
-    ? Math.round((done.length / tasks.length) * 100)
-    : 0;
+  const open = tasks?.filter((x) => x.status === "open") || [];
+  const done = tasks?.filter((x) => x.status === "done") || [];
+
+  const grouped = open.reduce((acc, task) => {
+    const c = task.category || "routine";
+    if (!acc[c]) acc[c] = [];
+    acc[c].push(task);
+    return acc;
+  }, {});
 
   async function toggle(task) {
-    const status = task.status === "done" ? "open" : "done";
-    await patchTask(task.id, { status });
+    await patchTask(task.id, { status: task.status === "done" ? "open" : "done" });
     load();
   }
 
@@ -52,7 +73,7 @@ export default function Tasks() {
       setForm(emptyForm);
       load();
     } catch (err) {
-      setError(err.message);
+      setError(toUserMessage(err, t));
     }
   }
 
@@ -71,88 +92,76 @@ export default function Tasks() {
       setExtractText("");
       load();
     } catch (err) {
-      setError(err.message);
+      setError(toUserMessage(err, t));
     } finally {
       setLoading(false);
     }
   }
 
-  const grouped = {};
-  open.forEach((t) => {
-    const c = t.category || "routine";
-    if (!grouped[c]) grouped[c] = [];
-    grouped[c].push(t);
-  });
+  if (tasks === null) {
+    return (
+      <>
+        <PageHeader title="לוח משימות" subtitle="טוען…" />
+        <SkeletonCard />
+      </>
+    );
+  }
 
   return (
     <>
-      <h1 className="page-title">לוח משימות</h1>
-      <p className="page-sub">משימות תפקותיות מהמסמכים — tasks.json</p>
+      <PageHeader
+        title="לוח משימות"
+        subtitle="משימות תפקותיות מהמסמכים — המוח התפקודי שלך"
+      />
 
-      <div className="glass-card">
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>התקדמות</span>
-          <span>{done.length}/{tasks.length}</span>
-        </div>
-        <div className="progress-bar">
-          <div className="progress-fill" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
+      <TaskProgress done={done.length} total={tasks.length} />
 
-      {error && <div className="error-box">{error}</div>}
+      {error && <ErrorAlert message={error} className="mb-4" />}
 
-      {Object.entries(grouped).map(([cat, list]) => (
-        <div key={cat} className="glass-card">
-          <h3>{CATEGORY_LABELS[cat] || cat}</h3>
-          {list.map((t) => (
-            <div key={t.id} className={`task-item ${t.status === "done" ? "done" : ""}`}>
-              <input
-                type="checkbox"
-                checked={t.status === "done"}
-                onChange={() => toggle(t)}
-              />
-              <div style={{ flex: 1 }}>
-                <strong>{t.title}</strong>
-                <p style={{ fontSize: "0.9rem", color: "var(--gray)" }}>{t.description}</p>
-                {t.time && <span className="chip">🕐 {t.time}</span>}
-                {t.safety_note && (
-                  <p style={{ fontSize: "0.8rem", color: "var(--warning)", marginTop: "0.35rem" }}>
-                    {t.safety_note}
-                  </p>
-                )}
-              </div>
-              <button className="btn btn-ghost" onClick={() => handleDelete(t.id)} type="button">
-                מחק
-              </button>
+      {tasks.length === 0 ? (
+        <EmptyState icon={ClipboardList} title={t("noTasks")} />
+      ) : (
+        Object.entries(grouped).map(([cat, list]) => (
+          <Card key={cat} className="mb-4">
+            <CardHeader title={CATEGORY_LABELS[cat] || cat} />
+            <div className="space-y-2">
+              {list.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onToggle={toggle}
+                  onDelete={handleDelete}
+                />
+              ))}
             </div>
-          ))}
-        </div>
-      ))}
+          </Card>
+        ))
+      )}
 
-      <div className="grid-2">
-        <div className="glass-card">
-          <h3>הוסף משימה</h3>
-          <form onSubmit={handleAdd}>
-            <div className="form-row">
-              <label>כותרת</label>
+      <div className="mt-6 grid gap-5 lg:grid-cols-2">
+        <Card>
+          <CardHeader title="הוסף משימה" />
+          <form onSubmit={handleAdd} className="space-y-3">
+            <FormField label="כותרת">
               <input
+                required
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                required
+                className={inputClass}
               />
-            </div>
-            <div className="form-row">
-              <label>תיאור</label>
+            </FormField>
+            <FormField label="תיאור">
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className={cn(inputClass, "min-h-[80px]")}
               />
-            </div>
-            <div className="form-row">
-              <label>קטגוריה</label>
+            </FormField>
+            <FormField label="קטגוריה">
               <select
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className={inputClass}
               >
                 {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
                   <option key={k} value={k}>
@@ -160,38 +169,46 @@ export default function Tasks() {
                   </option>
                 ))}
               </select>
-            </div>
-            <button className="btn btn-primary" type="submit">
-              הוסף
-            </button>
+            </FormField>
+            <Button type="submit">הוסף</Button>
           </form>
-        </div>
+        </Card>
 
-        <div className="glass-card">
-          <h3>חילוץ משימות מסיכום</h3>
-          <form onSubmit={handleExtract}>
-            <div className="form-row">
-              <label>שם מקור</label>
+        <Card>
+          <CardHeader title="חילוץ משימות מסיכום" subtitle="Bedrock" />
+          <form onSubmit={handleExtract} className="space-y-3">
+            <FormField label="שם מקור">
               <input
                 value={extractSource}
                 onChange={(e) => setExtractSource(e.target.value)}
+                className={inputClass}
               />
-            </div>
-            <div className="form-row">
-              <label>הדבק טקסט סיכום</label>
+            </FormField>
+            <FormField label="הדבק טקסט סיכום">
               <textarea
+                required
                 rows={5}
                 value={extractText}
                 onChange={(e) => setExtractText(e.target.value)}
-                required
+                className={inputClass}
               />
-            </div>
-            <button className="btn btn-primary" type="submit" disabled={loading}>
-              {loading ? "מחלץ…" : "חלץ משימות (Bedrock)"}
-            </button>
+            </FormField>
+            <Button type="submit" disabled={loading}>
+              {loading ? "מחלץ…" : "חלץ משימות"}
+            </Button>
           </form>
-        </div>
+        </Card>
       </div>
+
     </>
+  );
+}
+
+function FormField({ label, children }) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs text-slate-500">{label}</label>
+      {children}
+    </div>
   );
 }
