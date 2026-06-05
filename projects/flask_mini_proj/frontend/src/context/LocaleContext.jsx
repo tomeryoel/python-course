@@ -29,7 +29,7 @@ export function LocaleProvider({ children }) {
   const value = useMemo(
     () => ({
       locale,
-      setLocale,
+      setLocale: (loc) => setLocale(loc === LOCALES.en ? LOCALES.en : LOCALES.he),
       setLocaleFromUserMessage,
       processAssistantAnswer,
       uiDisclaimer: getUiDisclaimer(locale),

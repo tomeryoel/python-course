@@ -4,37 +4,72 @@
 
 @layer base {
   html {
-    @apply scroll-smooth;
+    @apply h-full scroll-smooth;
   }
 
   body {
-    @apply min-h-screen bg-navy-deep font-sans text-slate-100 antialiased;
+    @apply h-full font-sans text-slate-100 antialiased;
+    background-color: #0a1220;
     background-image:
-      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(74, 143, 212, 0.18), transparent),
-      radial-gradient(ellipse 60% 40% at 90% 10%, rgba(45, 106, 106, 0.12), transparent),
-      linear-gradient(165deg, #0a1220 0%, #0f1b2d 40%, #162436 100%);
+      radial-gradient(ellipse 90% 60% at 10% -20%, rgba(74, 143, 212, 0.22), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 95% 0%, rgba(61, 139, 139, 0.14), transparent 50%),
+      radial-gradient(ellipse 50% 40% at 50% 100%, rgba(45, 80, 130, 0.12), transparent),
+      linear-gradient(168deg, #0a1220 0%, #0f1b2d 42%, #152a42 100%);
+    background-attachment: fixed;
   }
 
   #root {
-    @apply min-h-screen;
+    @apply h-full min-h-screen;
+  }
+
+  ::selection {
+    @apply bg-accent/30 text-white;
   }
 }
 
 @layer components {
   .glass-panel {
-    @apply rounded-2xl border border-glass-border bg-glass shadow-glass backdrop-blur-xl;
+    @apply rounded-2xl border border-glass-border bg-glass shadow-glass backdrop-blur-2xl;
   }
 
-  .glass-panel-strong {
-    @apply rounded-2xl border border-white/15 bg-glass-strong shadow-card backdrop-blur-xl;
+  .glass-panel-premium {
+    @apply rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.09] to-white/[0.03] shadow-glass-lg backdrop-blur-2xl;
   }
 
   .text-gradient-brand {
-    @apply bg-gradient-to-l from-accent-light to-white bg-clip-text text-transparent;
+    @apply bg-gradient-to-l from-accent-light via-white to-accent-light bg-clip-text text-transparent;
   }
 
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-deep;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-deep;
+  }
+
+  /* ---- Chat layout -------------------------------------------------- */
+  /* The chat page is a normal flex column inside a scrollable <main>.    */
+  /* Only the messages region scrolls internally; nothing is ever clipped */
+  /* off-screen, so example prompts/input never "disappear" on resize.    */
+  .chat-page {
+    @apply flex w-full flex-col gap-4 md:gap-5;
+  }
+
+  .chat-panel-root {
+    @apply flex flex-col overflow-hidden rounded-2xl border border-white/10
+           bg-gradient-to-b from-white/[0.08] to-white/[0.02]
+           shadow-glass-lg backdrop-blur-2xl;
+  }
+
+  .chat-messages-region {
+    @apply scrollbar-calm overflow-y-auto;
+    /* Dominant area: ~48vh, bounded so input + prompts stay visible. */
+    min-height: clamp(300px, 48vh, 460px);
+    max-height: 58vh;
+  }
+
+  @media (max-width: 768px) {
+    .chat-messages-region {
+      min-height: clamp(240px, 44vh, 380px);
+      max-height: 60vh;
+    }
   }
 }
 

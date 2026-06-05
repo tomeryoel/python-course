@@ -3,10 +3,16 @@ import { MessageSquare } from "lucide-react";
 import { useLocale } from "../../context/LocaleContext";
 import EmptyState from "../ui/EmptyState";
 import ErrorAlert from "../ui/ErrorAlert";
-import LoadingDots from "../ui/LoadingDots";
+import TypingIndicator from "./TypingIndicator";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
 
+/**
+ * Chat panel layout (top → bottom, never overlapping):
+ *   1. messages region  (scrolls internally, dominant height)
+ *   2. error alert       (optional, between messages and input)
+ *   3. input row         (pinned directly under messages)
+ */
 export default function ChatPanel({
   messages,
   loading,
@@ -18,49 +24,43 @@ export default function ChatPanel({
 }) {
   const { t } = useLocale();
   const bottomRef = useRef(null);
-  const containerRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
+  const empty = messages.length === 0 && !loading;
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-glass-border glass-panel-strong">
-      {/* Messages — dominant vertical space */}
-      <div
-        ref={containerRef}
-        className="scrollbar-calm min-h-[min(58vh,520px)] flex-1 overflow-y-auto px-4 py-16 md:min-h-[min(62vh,580px)] md:px-6 md:py-20"
-      >
-        <div className="flex min-h-full flex-col gap-4">
-          {messages.length === 0 && !loading && (
+    <section className="chat-panel-root" aria-label="חלון שיחה">
+      <div className="chat-messages-region px-4 py-5 md:px-6 md:py-6">
+        {empty ? (
+          <div className="flex h-full items-center justify-center">
             <EmptyState
               icon={MessageSquare}
               title={t("chatEmpty")}
-              className="my-auto border-0 bg-transparent"
+              description="העוזר משתמש במסמכים שהועלו ובמשימות הפתוחות שלך."
+              className="max-w-sm border-white/10 bg-white/[0.02]"
             />
-          )}
-
-          {messages.map((msg, i) => (
-            <MessageBubble
-              key={`${msg.role}-${i}`}
-              role={msg.role}
-              text={msg.text}
-              sources={msg.sources}
-            />
-          ))}
-
-          {loading && (
-            <div className="self-start rounded-2xl rounded-bl-md border border-glass-border bg-glass-strong px-4 py-3">
-              <LoadingDots />
-              <span className="sr-only">{t("loading")}</span>
-            </div>
-          )}
-          <div ref={bottomRef} />
-        </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {messages.map((msg, i) => (
+              <MessageBubble
+                key={`${msg.role}-${i}`}
+                role={msg.role}
+                text={msg.text}
+                sources={msg.sources}
+              />
+            ))}
+            {loading && <TypingIndicator label={t("loading")} />}
+            <div ref={bottomRef} className="h-px" />
+          </div>
+        )}
       </div>
 
       {error && (
-        <div className="shrink-0 px-4 pb-2">
+        <div className="shrink-0 border-t border-white/8 px-4 py-3">
           <ErrorAlert message={error} />
         </div>
       )}
@@ -72,6 +72,6 @@ export default function ChatPanel({
         onClear={onClear}
         loading={loading}
       />
-    </div>
+    </section>
   );
 }

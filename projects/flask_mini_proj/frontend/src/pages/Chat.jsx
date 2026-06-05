@@ -6,12 +6,12 @@ import ExamplePrompts from "../components/chat/ExamplePrompts";
 import PageHeader from "../components/layout/PageHeader";
 import { useLocale } from "../context/LocaleContext";
 import { GENERAL_QUESTIONS, SCENARIO_PROMPTS } from "../data/examples";
-import { detectLocaleFromAnswer } from "../lib/i18n";
+import { detectLocaleFromAnswer, LOCALES } from "../lib/i18n";
 import { toUserMessage } from "../lib/errors";
 
 export default function Chat() {
   const location = useLocation();
-  const { setLocaleFromUserMessage, processAssistantAnswer, t } = useLocale();
+  const { setLocaleFromUserMessage, processAssistantAnswer, setLocale, t } = useLocale();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,10 +30,9 @@ export default function Chat() {
 
       try {
         const data = await sendChat(q);
-        const answerLocale = detectLocaleFromAnswer(
-          data.answer,
-          typeof userLocale === "string" ? userLocale : undefined
-        );
+        const answerLocale =
+          data.locale || detectLocaleFromAnswer(data.answer, userLocale);
+        setLocale(answerLocale === LOCALES.en ? LOCALES.en : LOCALES.he);
         const normalized = processAssistantAnswer(data.answer, answerLocale);
 
         setMessages((m) => [
@@ -51,7 +50,7 @@ export default function Chat() {
         setLoading(false);
       }
     },
-    [input, processAssistantAnswer, setLocaleFromUserMessage, t]
+    [input, processAssistantAnswer, setLocale, setLocaleFromUserMessage, t]
   );
 
   useEffect(() => {
@@ -59,6 +58,7 @@ export default function Chat() {
       ask(location.state.question);
       window.history.replaceState({}, "");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.question]);
 
   async function handleClear() {
@@ -68,30 +68,32 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] min-h-0 flex-col lg:h-[calc(100vh-5rem)]">
+    <div className="chat-page">
+      {/* 1. Header / disclaimer stays above (disclaimer is in AppShell) */}
       <PageHeader
+        compact
         title="שיחה עם העוזר"
         subtitle="שאל על ההנחיות מהמסמכים — במצוקה, העוזר יתחיל במשפט מרגיע."
       />
 
-      <div className="flex min-h-0 flex-1 flex-col">
-        <ChatPanel
-          messages={messages}
-          loading={loading}
-          error={error}
-          input={input}
-          onInputChange={setInput}
-          onSend={() => ask()}
-          onClear={handleClear}
-        />
+      {/* 2. Chat panel: messages (dominant) → input directly below */}
+      <ChatPanel
+        messages={messages}
+        loading={loading}
+        error={error}
+        input={input}
+        onInputChange={setInput}
+        onSend={() => ask()}
+        onClear={handleClear}
+      />
 
-        <ExamplePrompts
-          scenarios={SCENARIO_PROMPTS}
-          generalQuestions={GENERAL_QUESTIONS}
-          onSelect={ask}
-          disabled={loading}
-        />
-      </div>
+      {/* 3. Example prompts: clearly separated below the panel */}
+      <ExamplePrompts
+        scenarios={SCENARIO_PROMPTS}
+        generalQuestions={GENERAL_QUESTIONS}
+        onSelect={ask}
+        disabled={loading}
+      />
     </div>
   );
 }

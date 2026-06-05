@@ -5,6 +5,8 @@
 
 export const LOCALES = { he: "he", en: "en" };
 
+export { LOCALES as defaultLocales };
+
 const HEBREW_DISCLAIMER_MED =
   "לפי המסמכים שהועלו בלבד, ולא כהנחיה רפואית חדשה…";
 const ENGLISH_DISCLAIMER_MED =

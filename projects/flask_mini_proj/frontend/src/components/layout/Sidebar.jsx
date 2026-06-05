@@ -20,7 +20,7 @@ const links = [
 
 export default function Sidebar({ mobileOpen, onClose }) {
   const nav = (
-    <nav className="flex flex-col gap-1 p-2" aria-label="ניווט ראשי">
+    <nav className="flex flex-col gap-1.5 p-3" aria-label="ניווט ראשי">
       {links.map(({ to, label, icon: Icon, end }) => (
         <NavLink
           key={to}
@@ -29,20 +29,28 @@ export default function Sidebar({ mobileOpen, onClose }) {
           onClick={onClose}
           className={({ isActive }) =>
             cn(
-              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+              "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
               "focus-ring",
               isActive
-                ? "bg-accent/20 text-white shadow-inner border border-accent/30"
-                : "text-slate-400 hover:bg-white/6 hover:text-slate-100"
+                ? "border border-accent/25 bg-gradient-to-l from-accent/25 to-accent/5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                : "border border-transparent text-slate-400 hover:bg-white/[0.06] hover:text-slate-100"
             )
           }
         >
           {({ isActive }) => (
             <>
+              {/* active accent bar (RTL → right edge) */}
+              <span
+                className={cn(
+                  "absolute right-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-l-full bg-accent-light transition-opacity",
+                  isActive ? "opacity-100" : "opacity-0"
+                )}
+                aria-hidden
+              />
               <Icon
                 className={cn(
-                  "h-5 w-5 shrink-0",
-                  isActive ? "text-accent-light" : "text-slate-500"
+                  "h-5 w-5 shrink-0 transition-colors",
+                  isActive ? "text-accent-light" : "text-slate-500 group-hover:text-slate-300"
                 )}
                 strokeWidth={1.75}
               />
@@ -57,13 +65,15 @@ export default function Sidebar({ mobileOpen, onClose }) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-l lg:border-glass-border lg:bg-navy/80 lg:backdrop-blur-xl">
-        <div className="flex h-full flex-col p-5">
-          <Brand />
+      <aside className="sticky top-0 hidden h-screen lg:flex lg:w-64 lg:flex-col lg:border-l lg:border-white/8 lg:bg-navy-deep/70 lg:backdrop-blur-2xl">
+        <div className="flex h-full flex-col px-2 py-5">
+          <div className="px-3">
+            <Brand />
+          </div>
           {nav}
-          <footer className="mt-auto pt-6 text-xs text-slate-500">
-            <Brain className="mb-1 h-4 w-4 text-accent/60" />
-            זיכרון טיפולי מבוסס מסמכים
+          <footer className="mt-auto px-4 pt-6 text-xs text-slate-500">
+            <Brain className="mb-1.5 h-4 w-4 text-accent/60" />
+            זיכרון טיפולי מבוסס מסמכים מקומיים
           </footer>
         </div>
       </aside>

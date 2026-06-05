@@ -1,0 +1,8 @@
+# Optional heavy embedding backend (EMBEDDING_BACKEND=sentence_transformers).
+# NOT required for the app to run — the default TF-IDF backend needs nothing here.
+# Install only if you want transformer-quality multilingual embeddings:
+#   pip install -r requirements-ml.txt
+#
+# Note: pulls in PyTorch (large download). On Windows/CI this can be slow.
+sentence-transformers==3.3.1
+torch==2.5.1

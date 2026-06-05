@@ -1,11 +1,7 @@
 import { useCallback, useState } from "react";
 import { CloudUpload, FileUp } from "lucide-react";
 import { uploadDocument } from "../../api";
-import {
-  addUploadedDocument,
-  fileTypeBadge,
-  validateFile,
-} from "../../lib/documentsStore";
+import { validateFile } from "../../lib/documentsStore";
 import { cn } from "../../lib/cn";
 import ErrorAlert from "../ui/ErrorAlert";
 
@@ -32,16 +28,12 @@ export default function DocumentUploadZone({ onUploaded }) {
         const result = await uploadDocument(file, (p) => setProgress(p));
         setProgress(100);
         setStatus("success");
-        setMessage(
-          result.synced
-            ? "המסמך הועלה ויסונכרן לבסיס הידע שלך."
-            : "המסמך נשמר — סנכרון לענן יושלם כשהשרת יהיה זמין."
-        );
-        onUploaded?.(result.document);
+        setMessage(result.message || "המסמך הועלה והאינדקס עודכן.");
+        onUploaded?.(result);
       } catch (err) {
         console.error("[upload]", err);
         setStatus("error");
-        setMessage("לא הצלחנו להעלות את הקובץ. נסה שוב מאוחר יותר.");
+        setMessage(err?.message || "לא הצלחנו להעלות את הקובץ. נסה שוב מאוחר יותר.");
       } finally {
         setTimeout(() => setProgress(0), 2500);
       }
