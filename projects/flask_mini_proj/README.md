@@ -16,6 +16,8 @@ clinical documents**.
 - **Backend:** Flask + boto3
 - **Frontend:** React (Vite) + TailwindCSS, full RTL Hebrew
 - **Retrieval (runtime):** **local FAISS** vector search
+- **Embeddings (runtime):** **TF-IDF by default** (lightweight, no torch); optional
+  sentence-transformers backend
 - **Generation (runtime):** **Amazon Bedrock Runtime** (`converse`)
 - **Bedrock Knowledge Base:** kept in AWS **for assignment/demo/screenshots only** —
   no longer used by the live application
@@ -25,13 +27,25 @@ clinical documents**.
 ```text
 User question
   → Flask backend (/api/chat)
-  → local embedding of the question (sentence-transformers)
+  → local embedding of the question (TF-IDF default, sentence-transformers optional)
   → local FAISS cosine similarity search
   → top-k relevant chunks
   → prompt construction (context + open tasks + safety rules)
   → Amazon Bedrock Runtime `converse` (boto3)
   → AI answer → React frontend
 ```
+
+### Embedding backends
+
+Selected via `EMBEDDING_BACKEND`:
+
+| Value | Deps | Notes |
+|-------|------|-------|
+| `tfidf` (default) | `scikit-learn` (in `requirements.txt`) | Lightweight, offline, Windows/CI/Docker friendly. Lexical retrieval. |
+| `sentence_transformers` | `requirements-ml.txt` (PyTorch) | Higher-quality multilingual semantic retrieval. Heavy download. |
+
+To use the transformer backend: `pip install -r requirements-ml.txt` then set
+`EMBEDDING_BACKEND=sentence_transformers` and run `python rag_engine.py --rebuild`.
 
 ## 3. Bedrock Runtime (generation)
 
@@ -104,11 +118,22 @@ cd frontend && npm run dev      # http://127.0.0.1:5173
 ## 9. Rebuild the FAISS index
 
 ```bash
-python rag_engine.py --rebuild
+python rag_engine.py --rebuild     # rebuild from data/
+python rag_engine.py --status      # print index status as JSON
 ```
 
-Run this after adding documents. The app also rebuilds automatically when it detects that
-`data/` changed.
+Run rebuild after adding documents. The app also rebuilds automatically when it detects that
+`data/` changed, and the **Documents page** has a "בנה אינדקס מחדש" (rebuild) button that calls
+`POST /api/index/rebuild`.
+
+### Index / document API
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/index/status` | index_exists, chunk_count, document_count, embedding_backend, last_built_at, rebuild_needed, errors |
+| `POST /api/index/rebuild` | rebuild FAISS from current `data/` |
+| `GET /api/documents` | real files in `data/` + per-file indexed/chunk_count + index status |
+| `POST /api/documents/upload` | upload PDF/DOCX/TXT into `data/uploads/`, then rebuild |
 
 ## 10. Add new documents
 
@@ -123,19 +148,57 @@ docker build -t ptsd-companion .
 docker run -p 5000:5000 --env-file .env ptsd-companion
 ```
 
-The image builds the React frontend, installs Python deps, **pre-downloads the embedding
-model**, and builds the FAISS index at image-build time.
+The image builds the React frontend, installs the lightweight Python deps (no torch with the
+default TF-IDF backend), and builds the FAISS index from `data/` at image-build time.
 
 ## 12. EC2 deployment
 
-1. Launch an EC2 instance (Amazon Linux/Ubuntu) and install Docker.
-2. Copy the project (or `git clone`) and create `.env` on the server (never commit it).
-3. `docker build -t ptsd-companion .`
-4. `docker run -d -p 5000:5000 --env-file .env ptsd-companion`
-5. Open port **5000** in the security group (or 80 via nginx).
-6. Test `http://<PUBLIC_IP>:5000`, take screenshots.
-7. Local FAISS loads into memory on the instance; Bedrock Runtime is called from EC2.
+```bash
+# On the EC2 instance (Amazon Linux/Ubuntu) with Docker installed:
+git clone <your-repo> && cd flask_mini_proj
+cp .env.example .env && nano .env          # fill AWS_* + BEDROCK_MODEL_ID (never commit)
+
+docker build -t ptsd-companion .
+docker run -d -p 5000:5000 --env-file .env --name ptsd-companion ptsd-companion
+docker ps                                  # confirm the container is running
+```
+
+1. Open port **5000** in the EC2 security group (inbound, your IP or 0.0.0.0/0 for demo).
+2. Browse to `http://<EC2_PUBLIC_IP>:5000` and take screenshots.
+3. Local FAISS loads into the instance's memory; Bedrock Runtime is called from EC2.
    **No OpenSearch and no KB retrieval are required at runtime.**
+
+### Submission Screenshot Checklist
+
+Capture these for the report:
+
+1. **Bedrock Knowledge Base** screen (the KB you created in AWS Console).
+2. **Bedrock data source / sync status** screen (data source + last sync).
+3. **Flask app running locally** in the browser (`http://127.0.0.1:5000`).
+4. **EC2 instance details** screen (instance ID, public IPv4/DNS, state running).
+5. **Public app page via EC2** (`http://<EC2_PUBLIC_IP>:5000` in the browser).
+6. **Docker container running on EC2** (`docker ps` output in the SSH terminal).
+7. **Successful Q&A example** — a Hebrew question with a grounded answer + sources.
+8. **Cleanup proof** — note/screenshot listing deleted AWS resources (KB, OpenSearch
+   collection, EC2 instance, S3 buckets).
+
+### Quick command recap
+
+```bash
+# FAISS index
+python rag_engine.py --rebuild
+python rag_engine.py --status
+
+# Local run
+pip install -r requirements.txt
+cd frontend && npm install && npm run build && cd ..
+python app.py
+
+# Docker / EC2
+docker build -t ptsd-companion .
+docker run -d -p 5000:5000 --env-file .env --name ptsd-companion ptsd-companion
+docker ps
+```
 
 ## 13. AWS requirements
 
@@ -206,6 +269,7 @@ Dockerfile
 - **שרת:** Flask + boto3
 - **צד לקוח:** React (Vite) + TailwindCSS, תמיכת RTL מלאה
 - **אחזור (זמן ריצה):** **FAISS מקומי**
+- **Embeddings (זמן ריצה):** **TF-IDF כברירת מחדל** (קל, ללא torch); אופציונלי sentence-transformers
 - **יצירת תשובה (זמן ריצה):** **Amazon Bedrock Runtime**
 - **Bedrock Knowledge Base:** נשמר ב-AWS **לצורכי המטלה/הדגמה/צילומי מסך בלבד** — לא בשימוש בזמן ריצה
 

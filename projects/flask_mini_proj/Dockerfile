@@ -16,25 +16,19 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 
-# Build deps occasionally needed by faiss / sentence-transformers wheels.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
+# Lightweight default backend (TF-IDF) — no torch, fast image build.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pre-download the embedding model at build time so the container starts fast
-# and works without internet access at runtime (e.g. on a locked-down EC2).
-ARG EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-ENV EMBEDDING_MODEL=${EMBEDDING_MODEL}
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('${EMBEDDING_MODEL}')"
+# Default embedding backend. Switch to "sentence_transformers" only if you also
+# install requirements-ml.txt (heavy: pulls in PyTorch).
+ENV EMBEDDING_BACKEND=tfidf
 
 COPY . .
 COPY --from=frontend-build /static/dist ./static/dist
 
-# Build the FAISS index from data/ at image build time (optional but convenient).
-# Safe to fail if data/ is empty; the app rebuilds on first request otherwise.
+# Build the FAISS index from data/ at image-build time (TF-IDF is fast).
+# Safe to no-op if data/ is empty; the app rebuilds on demand otherwise.
 RUN python rag_engine.py --rebuild || echo "FAISS index will be built on first request"
 
 EXPOSE 5000

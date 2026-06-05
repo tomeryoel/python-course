@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from typing import Any
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Uploads live under data/uploads so the FAISS indexer (which walks data/) picks
+# them up automatically on the next rebuild.
 UPLOAD_DIR = os.path.join(BASE_DIR, "data", "uploads")
 REGISTRY_PATH = os.path.join(BASE_DIR, "documents_registry.json")
 
@@ -69,10 +71,8 @@ def register_document(
         "size_bytes": size_bytes,
         "source": source_label,
         "uploaded_at": datetime.now(timezone.utc).isoformat(),
-        "status": "pending_ingestion",
-        "ingestion_note": (
-            "ממתין לסנכרון ל-Knowledge Base — הפעל ingestion ב-AWS Bedrock."
-        ),
+        "status": "uploaded",
+        "ingestion_note": "נשמר בתיקיית data/ — ייכלל באינדקס FAISS לאחר בנייה מחדש.",
     }
     docs = _load_registry()
     docs.insert(0, entry)

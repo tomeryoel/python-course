@@ -36,7 +36,7 @@ def test_upload_pdf(isolated_docs):
 
     doc = save_upload(FakeFile())
     assert doc["type"] == "PDF"
-    assert doc["status"] == "pending_ingestion"
+    assert doc["status"] == "uploaded"
     assert len(list_documents()) == 1
 
 

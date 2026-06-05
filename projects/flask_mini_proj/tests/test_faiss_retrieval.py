@@ -15,6 +15,7 @@ from rag_engine import FaissRagEngine, chunk_documents, load_documents
 class FakeEmbedder:
     """Hashing bag-of-words embedder → cosine similarity tracks word overlap."""
 
+    backend = "fake"
     model_name = "fake-test-embedder"
     dim = 64
 
@@ -27,6 +28,15 @@ class FakeEmbedder:
             if norm > 0:
                 vectors[i] /= norm
         return vectors
+
+    def fit_transform(self, texts):
+        return self.encode(texts)
+
+    def save(self):
+        return None
+
+    def load(self):
+        return True
 
 
 @pytest.fixture

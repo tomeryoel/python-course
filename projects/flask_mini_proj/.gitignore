@@ -24,6 +24,7 @@ faiss_index.bin
 embeddings.npy
 chunks.npy
 faiss_meta.json
+tfidf_vectorizer.pkl
 
 # Local embedding model cache
 .cache/

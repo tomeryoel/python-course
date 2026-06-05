@@ -1,5 +1,3 @@
-import { loadUploadedDocuments } from "./lib/documentsStore";
-
 const API = "";
 
 export async function healthCheck() {
@@ -79,7 +77,7 @@ export async function uploadDocument(file, onProgress) {
   formData.append("file", file);
 
   const tick = (n) => onProgress?.(n);
-  tick(15);
+  tick(20);
 
   const res = await fetch(`${API}/api/documents/upload`, {
     method: "POST",
@@ -87,40 +85,36 @@ export async function uploadDocument(file, onProgress) {
     credentials: "include",
   });
 
-  tick(85);
+  tick(80);
   const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || "שגיאה בהעלאה");
-  }
+  if (!res.ok) throw new Error(data.error || "שגיאה בהעלאה");
 
   tick(100);
-  const doc = data.document;
   return {
-    synced: doc?.status === "synced",
-    document: {
-      id: doc.id,
-      name: doc.name,
-      type: doc.type,
-      uploadedAt: doc.uploaded_at,
-      status: doc.status === "pending_ingestion" ? "pending_sync" : doc.status,
-      size: doc.size_bytes,
-    },
+    document: data.document,
+    indexingStatus: data.indexing_status,
+    index: data.index,
+    message: data.message,
   };
 }
 
-export async function fetchUploadedDocuments() {
+export async function fetchDocuments() {
   const res = await fetch(`${API}/api/documents`);
-  if (res.ok) {
-    const data = await res.json();
-    return (data.documents || []).map((d) => ({
-      id: d.id,
-      name: d.name,
-      type: d.type,
-      uploadedAt: d.uploaded_at,
-      status: d.status === "pending_ingestion" ? "pending_sync" : d.status,
-      size: d.size_bytes,
-    }));
-  }
-  return loadUploadedDocuments();
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "שגיאה בטעינת מסמכים");
+  return { documents: data.documents || [], index: data.index || null };
+}
+
+export async function fetchIndexStatus() {
+  const res = await fetch(`${API}/api/index/status`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "שגיאה בטעינת סטטוס האינדקס");
+  return data.index;
+}
+
+export async function rebuildIndex() {
+  const res = await fetch(`${API}/api/index/rebuild`, { method: "POST" });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "בניית האינדקס נכשלה");
+  return data;
 }

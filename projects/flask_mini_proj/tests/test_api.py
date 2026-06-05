@@ -218,6 +218,9 @@ def test_documents_upload_endpoint(client, tmp_path, monkeypatch):
     registry = tmp_path / "registry.json"
     monkeypatch.setattr("documents.UPLOAD_DIR", str(upload_dir))
     monkeypatch.setattr("documents.REGISTRY_PATH", str(registry))
+    # Avoid a heavy real FAISS rebuild during the API test.
+    monkeypatch.setattr("app.rebuild_index", lambda: {"chunk_count": 1})
+    monkeypatch.setattr("app.get_index_status", lambda: {"chunk_count": 1})
 
     data = {"file": (io.BytesIO(b"%PDF-1.4 test"), "summary.pdf")}
     res = client.post(
