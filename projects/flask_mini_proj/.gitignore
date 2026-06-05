@@ -13,7 +13,17 @@ build/
 .ipynb_checkpoints/
 
 *.db
+
+# Uploaded documents and their registry (runtime data)
 data/uploads/*
 !data/uploads/.gitkeep
 documents_registry.json
 
+# Generated FAISS artifacts (rebuilt from data/ on first run)
+faiss_index.bin
+embeddings.npy
+chunks.npy
+faiss_meta.json
+
+# Local embedding model cache
+.cache/

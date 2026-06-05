@@ -31,8 +31,7 @@ export default function Chat() {
       try {
         const data = await sendChat(q);
         const answerLocale =
-          data.locale ||
-          detectLocaleFromAnswer(data.answer, userLocale);
+          data.locale || detectLocaleFromAnswer(data.answer, userLocale);
         setLocale(answerLocale === LOCALES.en ? LOCALES.en : LOCALES.he);
         const normalized = processAssistantAnswer(data.answer, answerLocale);
 
@@ -59,6 +58,7 @@ export default function Chat() {
       ask(location.state.question);
       window.history.replaceState({}, "");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.question]);
 
   async function handleClear() {
@@ -69,32 +69,31 @@ export default function Chat() {
 
   return (
     <div className="chat-page">
-      <div className="mx-auto w-full max-w-chat shrink-0">
-        <PageHeader
-          compact
-          title="שיחה עם העוזר"
-          subtitle="שאל על ההנחיות מהמסמכים — במצוקה, העוזר יתחיל במשפט מרגיע."
-        />
-      </div>
+      {/* 1. Header / disclaimer stays above (disclaimer is in AppShell) */}
+      <PageHeader
+        compact
+        title="שיחה עם העוזר"
+        subtitle="שאל על ההנחיות מהמסמכים — במצוקה, העוזר יתחיל במשפט מרגיע."
+      />
 
-      <div className="mx-auto flex w-full max-w-chat min-h-0 flex-1 flex-col gap-5">
-        <ChatPanel
-          messages={messages}
-          loading={loading}
-          error={error}
-          input={input}
-          onInputChange={setInput}
-          onSend={() => ask()}
-          onClear={handleClear}
-        />
+      {/* 2. Chat panel: messages (dominant) → input directly below */}
+      <ChatPanel
+        messages={messages}
+        loading={loading}
+        error={error}
+        input={input}
+        onInputChange={setInput}
+        onSend={() => ask()}
+        onClear={handleClear}
+      />
 
-        <ExamplePrompts
-          scenarios={SCENARIO_PROMPTS}
-          generalQuestions={GENERAL_QUESTIONS}
-          onSelect={ask}
-          disabled={loading}
-        />
-      </div>
+      {/* 3. Example prompts: clearly separated below the panel */}
+      <ExamplePrompts
+        scenarios={SCENARIO_PROMPTS}
+        generalQuestions={GENERAL_QUESTIONS}
+        onSelect={ask}
+        disabled={loading}
+      />
     </div>
   );
 }

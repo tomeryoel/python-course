@@ -1,3 +1,5 @@
+import { loadUploadedDocuments } from "./lib/documentsStore";
+
 const API = "";
 
 export async function healthCheck() {
@@ -120,6 +122,5 @@ export async function fetchUploadedDocuments() {
       size: d.size_bytes,
     }));
   }
-  const { loadUploadedDocuments } = await import("./lib/documentsStore");
   return loadUploadedDocuments();
 }

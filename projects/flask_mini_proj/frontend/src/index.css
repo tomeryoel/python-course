@@ -21,6 +21,10 @@
   #root {
     @apply h-full min-h-screen;
   }
+
+  ::selection {
+    @apply bg-accent/30 text-white;
+  }
 }
 
 @layer components {
@@ -40,23 +44,31 @@
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-deep;
   }
 
-  /* Chat page: full-height flex column without padding hacks */
+  /* ---- Chat layout -------------------------------------------------- */
+  /* The chat page is a normal flex column inside a scrollable <main>.    */
+  /* Only the messages region scrolls internally; nothing is ever clipped */
+  /* off-screen, so example prompts/input never "disappear" on resize.    */
   .chat-page {
-    @apply flex min-h-0 w-full flex-1 flex-col;
+    @apply flex w-full flex-col gap-4 md:gap-5;
   }
 
   .chat-panel-root {
-    @apply flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.08] to-white/[0.02] shadow-glass-lg backdrop-blur-2xl;
+    @apply flex flex-col overflow-hidden rounded-2xl border border-white/10
+           bg-gradient-to-b from-white/[0.08] to-white/[0.02]
+           shadow-glass-lg backdrop-blur-2xl;
   }
 
   .chat-messages-region {
-    @apply scrollbar-calm min-h-0 flex-1 overflow-y-auto;
-    min-height: clamp(280px, 48vh, 55vh);
+    @apply scrollbar-calm overflow-y-auto;
+    /* Dominant area: ~48vh, bounded so input + prompts stay visible. */
+    min-height: clamp(300px, 48vh, 460px);
+    max-height: 58vh;
   }
 
   @media (max-width: 768px) {
     .chat-messages-region {
-      min-height: clamp(240px, 42vh, 50vh);
+      min-height: clamp(240px, 44vh, 380px);
+      max-height: 60vh;
     }
   }
 }
