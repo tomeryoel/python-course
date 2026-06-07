@@ -1,16 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Anchor, Footprints, Moon, Pill, Sparkles } from "lucide-react";
-import { fetchTasks } from "../api";
+import { Anchor, BarChart3, Footprints, Moon, Phone, Pill, Sparkles } from "lucide-react";
+import { fetchTasks, fetchWeeklySnapshot, triggerEmergencyCall } from "../api";
+import EmergencyContactModal from "../components/tools/EmergencyContactModal";
 import { Card, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import PageHeader from "../components/layout/PageHeader";
 import { SkeletonCard } from "../components/ui/Skeleton";
 import Badge from "../components/ui/Badge";
+import ErrorAlert from "../components/ui/ErrorAlert";
 import { CATEGORY_LABELS } from "../data/examples";
 
 export default function Home() {
   const [tasks, setTasks] = useState(null);
+  const [snapshot, setSnapshot] = useState(null);
+  const [snapshotLoading, setSnapshotLoading] = useState(false);
+  const [snapshotError, setSnapshotError] = useState("");
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [emergencyLoading, setEmergencyLoading] = useState(false);
+  const [emergencyResult, setEmergencyResult] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -91,6 +99,93 @@ export default function Home() {
           </div>
         </Card>
       </div>
+
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
+        <Card premium>
+          <CardHeader
+            title="סיכום שבועי"
+            subtitle="Lambda tool — Weekly Wellness Snapshot"
+            action={<BarChart3 className="h-5 w-5 text-accent-light" />}
+          />
+          {snapshotError && <ErrorAlert message={snapshotError} className="mb-3" />}
+          {snapshot ? (
+            <div className="space-y-2 text-sm text-slate-300">
+              <p>{snapshot.week_summary}</p>
+              <p className="text-teal-200">{snapshot.encouragement}</p>
+              <p className="text-slate-400">
+                <strong className="text-slate-200">מיקוד הבא:</strong> {snapshot.next_focus}
+              </p>
+              <p className="text-2xs text-slate-500">{snapshot.disclaimer}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400">לחץ ליצירת סיכום מהמשימות שלך.</p>
+          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-4"
+            disabled={snapshotLoading}
+            onClick={async () => {
+              setSnapshotLoading(true);
+              setSnapshotError("");
+              try {
+                setSnapshot(await fetchWeeklySnapshot("he"));
+              } catch (e) {
+                setSnapshotError(e.message);
+              } finally {
+                setSnapshotLoading(false);
+              }
+            }}
+          >
+            {snapshotLoading ? "מייצר…" : "Generate Weekly Snapshot"}
+          </Button>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="תמיכה — איש קשר חירום"
+            subtitle="Amazon Connect demo — דורש אישור מפורש"
+            action={<Phone className="h-5 w-5 text-amber-300" />}
+          />
+          <p className="text-sm leading-relaxed text-slate-400">
+            מפעיל שיחת תמיכה אוטומטית לאיש קשר שהגדרת.{" "}
+            <strong className="text-amber-200/90">לא שירות חירום רפואי.</strong>
+          </p>
+          <Button
+            variant="danger"
+            size="sm"
+            className="mt-4"
+            onClick={() => {
+              setEmergencyResult(null);
+              setEmergencyOpen(true);
+            }}
+          >
+            Contact Emergency Support
+          </Button>
+        </Card>
+      </div>
+
+      <EmergencyContactModal
+        open={emergencyOpen}
+        onClose={() => setEmergencyOpen(false)}
+        loading={emergencyLoading}
+        result={emergencyResult}
+        onConfirm={async () => {
+          setEmergencyLoading(true);
+          try {
+            const res = await triggerEmergencyCall(true, {
+              user_display_name: "User",
+              trigger_reason: "User confirmed from dashboard",
+              language: "he",
+            });
+            setEmergencyResult(res);
+          } catch (e) {
+            setEmergencyResult({ result: { error: e.message } });
+          } finally {
+            setEmergencyLoading(false);
+          }
+        }}
+      />
 
       <Card className="mt-5 overflow-hidden">
         <div className="relative flex flex-col items-center px-6 py-10 text-center md:py-12">

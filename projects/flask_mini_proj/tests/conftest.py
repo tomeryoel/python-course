@@ -11,7 +11,18 @@ def tasks_file(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def client(monkeypatch, tasks_file):
+def chat_db(tmp_path, monkeypatch):
+    db_path = tmp_path / "chat_memory.db"
+    monkeypatch.setenv("CHAT_DB_PATH", str(db_path))
+    import chat_store
+
+    chat_store.DB_PATH = str(db_path)
+    chat_store.init_db()
+    return db_path
+
+
+@pytest.fixture
+def client(monkeypatch, tasks_file, chat_db):
     monkeypatch.setenv("KNOWLEDGE_BASE_ID", "TEST_KB_ID")
     monkeypatch.setenv("FLASK_SECRET_KEY", "test-secret")
     monkeypatch.delenv("FLASK_DEBUG", raising=False)

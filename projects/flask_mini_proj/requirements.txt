@@ -3,15 +3,8 @@ Flask==3.1.3
 Werkzeug==3.1.8
 python-dotenv==1.2.2
 
-# AWS SDK â€” Bedrock Runtime (text generation) only at runtime
+# AWS SDK — Bedrock Agent (chat) + Lambda tools + optional Bedrock Runtime (task extraction)
 boto3==1.38.23
-
-# Local RAG (lightweight, default backend = TF-IDF, no torch)
-numpy==2.1.3
-faiss-cpu==1.9.0.post1
-scikit-learn==1.5.2
-pypdf==5.1.0
-python-docx==1.1.2
 
 # Tests
 pytest==8.3.5

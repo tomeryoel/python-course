@@ -185,9 +185,7 @@ def extract_tasks_from_text(
 
 
 def _llm_extract_tasks(document_text: str, source_name: str) -> list[dict[str, Any]]:
-    from rag_engine import get_engine
-
-    engine = get_engine()
+    from bedrock_llm import converse
     prompt = f"""נתח את הסיכום הקליני הבא וחלץ משימות תפקותיות/practical בלבד.
 החזר JSON בלבד — מערך של אובייקטים ללא טקסט נוסף.
 
@@ -210,7 +208,7 @@ def _llm_extract_tasks(document_text: str, source_name: str) -> list[dict[str, A
         "אתה מחלץ משימות טיפוליות מסיכומים קליניים. "
         "החזר רק JSON תקין — מערך. אל תמציא תרופות שלא מופיעות בטקסט."
     )
-    answer, _ = engine._converse(prompt, extra_system=system)
+    answer, _ = converse(prompt, extra_system=system)
     return _parse_tasks_json(answer)
 
 

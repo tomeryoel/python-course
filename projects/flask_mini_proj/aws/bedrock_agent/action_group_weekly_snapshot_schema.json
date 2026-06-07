@@ -1,0 +1,67 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Weekly Wellness Snapshot",
+    "version": "1.0.0",
+    "description": "Generates a weekly wellness summary from tasks and recent topics."
+  },
+  "paths": {
+    "/weekly_wellness_snapshot": {
+      "post": {
+        "summary": "Generate weekly wellness snapshot",
+        "operationId": "weekly_wellness_snapshot",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "completed_tasks": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "List of completed task titles"
+                  },
+                  "open_tasks": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "List of open task titles"
+                  },
+                  "recent_topics": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Recent wellness topics"
+                  },
+                  "language": {
+                    "type": "string",
+                    "enum": ["he", "en"],
+                    "description": "Response language"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Weekly snapshot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "week_summary": { "type": "string" },
+                    "completed_tasks": { "type": "integer" },
+                    "open_tasks": { "type": "integer" },
+                    "encouragement": { "type": "string" },
+                    "next_focus": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

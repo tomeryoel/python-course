@@ -1,0 +1,57 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Emergency Contact Voice Call",
+    "version": "1.0.0",
+    "description": "Triggers an automated support call to a predefined emergency contact after explicit user confirmation. NOT emergency services."
+  },
+  "paths": {
+    "/emergency_contact_voice_call": {
+      "post": {
+        "summary": "Trigger emergency contact call",
+        "operationId": "emergency_contact_voice_call",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["confirmed"],
+                "properties": {
+                  "emergency_contact_phone": {
+                    "type": "string",
+                    "description": "E.164 phone number e.g. +972501234567"
+                  },
+                  "user_display_name": { "type": "string" },
+                  "trigger_reason": { "type": "string" },
+                  "language": { "type": "string", "enum": ["he", "en"] },
+                  "confirmed": {
+                    "type": "boolean",
+                    "description": "Must be true — explicit user confirmation required"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Call result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "contact_id": { "type": "string" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

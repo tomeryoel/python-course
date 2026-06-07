@@ -1,3 +1,10 @@
+"""
+LEGACY — superseded by chat_store.py (SQLite conversations + messages).
+
+This module used an older messages-only schema (session_id). Do not import
+for new code. Kept only for reference during migration.
+"""
+
 import sqlite3
 from datetime import datetime
 

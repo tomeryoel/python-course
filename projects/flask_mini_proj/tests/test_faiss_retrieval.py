@@ -75,7 +75,7 @@ def test_build_and_retrieve(faiss_data):
     engine._index = None
     engine._chunks = []
 
-    engine.ensure_index()
+    engine.ensure_index(force_rebuild=True)
     results = engine.retrieve_chunks("קפאין שינה", k=1)
     assert results
     assert "שינה" in results[0]["text"] or "קפאין" in results[0]["text"]
@@ -89,7 +89,7 @@ def test_artifacts_persisted_and_reloaded(faiss_data):
     engine.embedder = FakeEmbedder()
     engine._index = None
     engine._chunks = []
-    engine.ensure_index()
+    engine.ensure_index(force_rebuild=True)
 
     assert os.path.isfile(rag_engine.FAISS_INDEX_PATH)
     assert os.path.isfile(rag_engine.FAISS_META_PATH)
