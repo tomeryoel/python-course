@@ -13,6 +13,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from json_utils import json_safe
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.getenv("CHAT_DB_PATH", os.path.join(BASE_DIR, "chat_memory.db"))
 
@@ -25,6 +27,11 @@ def _connect() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def _row_dict(row: sqlite3.Row) -> dict[str, Any]:
+    """Convert SQLite row to a JSON-safe dict."""
+    return json_safe(dict(row))
 
 
 def _messages_has_conversation_id(cur: sqlite3.Cursor) -> bool:
@@ -95,7 +102,7 @@ def list_conversations(limit: int = 50) -> list[dict[str, Any]]:
         (limit,),
     ).fetchall()
     conn.close()
-    return [dict(r) for r in rows]
+    return [_row_dict(r) for r in rows]
 
 
 def get_conversation(conversation_id: str) -> dict[str, Any] | None:
@@ -113,8 +120,8 @@ def get_conversation(conversation_id: str) -> dict[str, Any] | None:
         (conversation_id,),
     ).fetchall()
     conn.close()
-    conv = dict(row)
-    conv["messages"] = [dict(m) for m in msgs]
+    conv = _row_dict(row)
+    conv["messages"] = [_row_dict(m) for m in msgs]
     return conv
 
 

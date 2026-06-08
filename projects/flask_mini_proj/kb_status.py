@@ -14,6 +14,7 @@ import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 
 from agent_engine import is_agent_configured
+from json_utils import json_safe
 
 
 def _region() -> str:
@@ -55,13 +56,13 @@ def list_s3_documents(max_keys: int = 50) -> tuple[list[dict[str, Any]], str | N
             continue
         name = key.split("/")[-1]
         ext = name.rsplit(".", 1)[-1].upper() if "." in name else "FILE"
-        files.append({
+        files.append(json_safe({
             "name": name,
             "key": key,
             "type": ext,
             "size_bytes": obj.get("Size", 0),
-            "modified": obj.get("LastModified").isoformat() if obj.get("LastModified") else "",
-        })
+            "modified": obj.get("LastModified"),
+        }))
     return files, None
 
 
@@ -73,7 +74,7 @@ def get_knowledge_base_status() -> dict[str, Any]:
 
     s3_files, s3_error = list_s3_documents() if bucket else ([], None)
 
-    return {
+    return json_safe({
         "runtime_mode": "bedrock_agent_knowledge_base",
         "knowledge_base_configured": bool(kb_id),
         "knowledge_base_id": kb_id or None,
@@ -93,4 +94,4 @@ def get_knowledge_base_status() -> dict[str, Any]:
             "enabled": os.getenv("ENABLE_LEGACY_FAISS", "false").lower() in ("1", "true", "yes"),
             "note": "Local FAISS is legacy/optional only — not used by /api/chat.",
         },
-    }
+    })

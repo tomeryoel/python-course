@@ -7,9 +7,10 @@ and appends a hidden context block to the Agent prompt (not saved as the user me
 
 from __future__ import annotations
 
-import json
 import re
 from typing import Any
+
+from json_utils import dumps_json_safe, json_safe
 
 import chat_store
 from tasks import TasksFileError, get_all_tasks
@@ -176,22 +177,22 @@ def build_weekly_app_context(
         if t and t not in recent_topics:
             recent_topics.append(t)
 
-    return {
+    return json_safe({
         "completed_tasks": completed_tasks,
         "open_tasks": open_tasks,
         "recent_topics": recent_topics[:10],
         "recent_context_summary": _build_recent_context_summary(user_messages, lang),
         "language": lang,
-    }
+    })
 
 
 def format_weekly_app_context_block(context: dict[str, Any]) -> str:
     """Hidden block appended to the Agent prompt (not shown in UI chat history)."""
     return (
         "\n\n[APP_CONTEXT_FOR_WEEKLY_SNAPSHOT]\n"
-        f"completed_tasks: {json.dumps(context.get('completed_tasks', []), ensure_ascii=False)}\n"
-        f"open_tasks: {json.dumps(context.get('open_tasks', []), ensure_ascii=False)}\n"
-        f"recent_topics: {json.dumps(context.get('recent_topics', []), ensure_ascii=False)}\n"
+        f"completed_tasks: {dumps_json_safe(context.get('completed_tasks', []), ensure_ascii=False)}\n"
+        f"open_tasks: {dumps_json_safe(context.get('open_tasks', []), ensure_ascii=False)}\n"
+        f"recent_topics: {dumps_json_safe(context.get('recent_topics', []), ensure_ascii=False)}\n"
         f"recent_context_summary: {context.get('recent_context_summary', '')}\n"
         f"language: {context.get('language', 'he')}\n"
         "[/APP_CONTEXT_FOR_WEEKLY_SNAPSHOT]"

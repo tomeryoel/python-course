@@ -40,7 +40,7 @@
     "source": "סיכום ביקור פסיכיאטר 24.05.2026",
     "frequency": "daily",
     "time": "14:00",
-    "status": "open",
+    "status": "done",
     "safety_note": ""
   },
   {
@@ -51,7 +51,7 @@
     "source": "סיכום ביקור פסיכיאטר 03.05.2026",
     "frequency": "daily",
     "time": "21:30",
-    "status": "open",
+    "status": "done",
     "safety_note": ""
   },
   {
@@ -106,7 +106,7 @@
     "source": "סיכום ביקור פסיכיאטר 24.05.2026",
     "frequency": "as_needed",
     "time": "",
-    "status": "open",
+    "status": "done",
     "safety_note": "לפי המסמכים בלבד ולא כהנחיה רפואית חדשה. אין להשתמש יומיומית."
   }
 ]

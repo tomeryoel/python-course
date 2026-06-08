@@ -36,6 +36,7 @@ from tools import (
     invoke_stress_check_in,
     invoke_weekly_snapshot,
 )
+from json_utils import json_safe
 from weekly_context import augment_message_for_weekly_snapshot, is_weekly_snapshot_request
 
 load_dotenv()
@@ -195,7 +196,7 @@ def create_app() -> Flask:
             title=message[:60] + ("…" if len(message) > 60 else ""),
         )
 
-        return jsonify({
+        return jsonify(json_safe({
             "status": "success",
             "answer": answer,
             "conversation_id": conversation_id,
@@ -205,7 +206,7 @@ def create_app() -> Flask:
             "tool_calls": result.get("tool_calls", []),
             "trace_summary": result.get("trace_summary", []),
             "locale": locale,
-        })
+        }))
 
     @app.route("/api/clear", methods=["POST"])
     def api_clear():

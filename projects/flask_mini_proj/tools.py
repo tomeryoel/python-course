@@ -13,6 +13,8 @@ import os
 import re
 from typing import Any
 
+from json_utils import json_safe
+
 import boto3
 from botocore.exceptions import ClientError
 
@@ -66,7 +68,7 @@ def _invoke_lambda(function_name: str, payload: dict[str, Any]) -> dict[str, Any
         resp = client.invoke(
             FunctionName=function_name,
             InvocationType="RequestResponse",
-            Payload=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            Payload=json.dumps(json_safe(payload), ensure_ascii=False).encode("utf-8"),
         )
         raw = resp["Payload"].read().decode("utf-8")
         body = json.loads(raw) if raw else {}

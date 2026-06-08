@@ -14,11 +14,12 @@ Bedrock Runtime converse directly.
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
 from typing import Any
+
+from json_utils import dumps_json_safe, json_safe
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError, PartialCredentialsError
@@ -96,11 +97,11 @@ def _extract_citations_from_trace(trace: dict) -> list[dict[str, Any]]:
             text = (content.get("text") or "")[:280]
             loc = ref.get("location", {}) or {}
             s3 = loc.get("s3Location", {}) or {}
-            sources.append({
+            sources.append(json_safe({
                 "text_preview": text + ("…" if len(content.get("text", "")) > 280 else ""),
                 "uri": s3.get("uri", ""),
                 "type": loc.get("type", "S3"),
-            })
+            }))
     except (TypeError, KeyError):
         pass
     return sources
@@ -113,11 +114,11 @@ def _extract_tool_calls_from_trace(trace: dict) -> list[dict[str, Any]]:
         inv = orch.get("invocationInput", {})
         action = inv.get("actionGroupInvocationInput", {})
         if action:
-            tools.append({
+            tools.append(json_safe({
                 "action_group": action.get("actionGroupName", ""),
                 "function": action.get("function", ""),
                 "parameters": action.get("parameters", []),
-            })
+            }))
     except (TypeError, KeyError):
         pass
     return tools
@@ -140,10 +141,10 @@ def parse_agent_response(response: dict) -> dict[str, Any]:
                     for ref in cite.get("retrievedReferences", []) or []:
                         content = ref.get("content", {}) or {}
                         text = (content.get("text") or "")[:280]
-                        sources.append({"text_preview": text, "source": "attribution"})
+                        sources.append(json_safe({"text_preview": text, "source": "attribution"}))
         if "trace" in event:
             trace = event["trace"]
-            trace_summary.append(json.dumps(trace, ensure_ascii=False)[:200])
+            trace_summary.append(dumps_json_safe(trace, ensure_ascii=False)[:200])
             sources.extend(_extract_citations_from_trace(trace))
             tool_calls.extend(_extract_tool_calls_from_trace(trace))
 
@@ -199,10 +200,14 @@ def invoke_bedrock_agent(
             enableTrace=True,
         )
     except Exception as exc:  # noqa: BLE001
-        logger.error("[agent] invoke_agent failed: %s", exc)
+        logger.exception("[agent] invoke_agent failed (%s): %s", type(exc).__name__, exc)
         raise
 
-    parsed = parse_agent_response(response)
+    try:
+        parsed = parse_agent_response(response)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("[agent] parse_agent_response failed (%s): %s", type(exc).__name__, exc)
+        raise
     logger.info(
         "[agent] response len=%d sources=%d tools=%d",
         len(parsed["answer"]), len(parsed["sources"]), len(parsed["tool_calls"]),
@@ -232,6 +237,11 @@ def answer_with_agent(
     try:
         parsed = invoke_bedrock_agent(message, session_id, memory_context)
     except Exception as exc:  # noqa: BLE001
+        logger.exception(
+            "[agent] answer_with_agent failed (%s): %s",
+            type(exc).__name__,
+            exc,
+        )
         return {
             "status": "error",
             "message": _friendly_aws_error(exc),
@@ -242,7 +252,7 @@ def answer_with_agent(
     if not parsed["answer"]:
         parsed["answer"] = "לא התקבלה תשובה מה-Agent. בדוק את הגדרות ה-Agent ב-AWS Console."
 
-    return {
+    return json_safe({
         "status": "success",
         "answer": parsed["answer"],
         "conversation_id": conversation_id,
@@ -253,4 +263,4 @@ def answer_with_agent(
         "memory_summary": {
             "recent_turns": len(memory_context or []),
         },
-    }
+    })
