@@ -7,11 +7,14 @@
   },
   "paths": {
     "/stress-check-in-classifier": {
+      "description": "Classifies the user's current stress, confusion, cognitive overload, or crisis state and returns safe routing guidance for the Bedrock Agent.",
       "post": {
-        "summary": "Classify stress/overload state and return Agent routing guidance",
+        "summary": "Classify stress and overload state",
+        "description": "Classifies the user's current state as low, medium, high, or crisis and returns safe routing guidance for the Agent. This action does not diagnose, provide therapy, provide medical advice, provide psychiatric advice, recommend medication changes, or replace emergency care.",
         "operationId": "stress_check_in_classifier",
         "requestBody": {
           "required": true,
+          "description": "User state information used to classify the current stress, confusion, overload, or crisis level.",
           "content": {
             "application/json": {
               "schema": {
@@ -19,49 +22,50 @@
                 "properties": {
                   "user_message": {
                     "type": "string",
-                    "description": "The user's current message"
+                    "description": "The user's current message describing their question, stress, confusion, overload, or current state."
                   },
                   "self_reported_stress_level": {
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 10,
-                    "description": "Optional self-reported stress 1-10"
+                    "description": "Optional self-reported stress level from 1 to 10."
                   },
                   "confusion_level": {
                     "type": "integer",
                     "minimum": 1,
                     "maximum": 10,
-                    "description": "Optional confusion level 1-10"
+                    "description": "Optional self-reported confusion or cognitive overload level from 1 to 10."
                   },
                   "has_immediate_danger": {
                     "type": "boolean",
-                    "description": "Immediate danger flag"
+                    "description": "Whether the user explicitly indicates immediate danger."
                   },
                   "mentions_self_harm": {
                     "type": "boolean",
-                    "description": "Self-harm mention flag"
+                    "description": "Whether the user mentions self-harm, suicidal thoughts, or inability to stay safe."
                   },
                   "wants_human_support": {
                     "type": "boolean",
-                    "description": "User wants human support"
+                    "description": "Whether the user asks for or wants help from another person or trusted contact."
                   },
                   "preferred_language": {
                     "type": "string",
                     "enum": ["he", "en"],
-                    "description": "Response language"
+                    "description": "Preferred response language. Use he for Hebrew and en for English."
                   },
                   "recent_context_summary": {
                     "type": "string",
-                    "description": "Optional recent conversation context"
+                    "description": "Optional short summary of recent conversation or relevant app context."
                   }
-                }
+                },
+                "required": ["user_message"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Classification and routing guidance",
+            "description": "Classification and routing guidance returned successfully.",
             "content": {
               "application/json": {
                 "schema": {
@@ -69,33 +73,71 @@
                   "properties": {
                     "classification": {
                       "type": "string",
-                      "enum": ["low", "medium", "high", "crisis"]
+                      "enum": ["low", "medium", "high", "crisis"],
+                      "description": "The classified state of the user: low, medium, high, or crisis."
                     },
                     "confidence": {
                       "type": "string",
-                      "enum": ["low", "medium", "high"]
+                      "enum": ["low", "medium", "high"],
+                      "description": "Confidence level of the rule-based classification."
                     },
-                    "recommended_route": { "type": "string" },
+                    "recommended_route": {
+                      "type": "string",
+                      "description": "Recommended response route for the Agent, such as kb_answer, kb_answer_short, grounding_then_kb, trusted_contact_then_kb, professional_support_and_kb, or crisis_support."
+                    },
                     "response_mode": {
                       "type": "string",
-                      "enum": ["normal", "short", "very_short", "crisis_safe"]
+                      "enum": ["normal", "short", "very_short", "crisis_safe"],
+                      "description": "Recommended response mode for the Agent."
                     },
-                    "should_use_knowledge_base": { "type": "boolean" },
-                    "should_start_with_grounding": { "type": "boolean" },
-                    "should_offer_trusted_contact_message": { "type": "boolean" },
-                    "should_recommend_professional_support": { "type": "boolean" },
-                    "should_recommend_emergency_support": { "type": "boolean" },
-                    "agent_instruction": { "type": "string" },
-                    "user_facing_summary": { "type": "string" },
+                    "should_use_knowledge_base": {
+                      "type": "boolean",
+                      "description": "Whether the Agent should use the Knowledge Base for the response."
+                    },
+                    "should_start_with_grounding": {
+                      "type": "boolean",
+                      "description": "Whether the Agent should start with a short grounding or regulation step."
+                    },
+                    "should_offer_trusted_contact_message": {
+                      "type": "boolean",
+                      "description": "Whether the Agent should offer to help draft a message to a trusted person."
+                    },
+                    "should_recommend_professional_support": {
+                      "type": "boolean",
+                      "description": "Whether the Agent should recommend contacting professional support."
+                    },
+                    "should_recommend_emergency_support": {
+                      "type": "boolean",
+                      "description": "Whether the Agent should recommend local emergency services or immediate human help."
+                    },
+                    "agent_instruction": {
+                      "type": "string",
+                      "description": "Instruction for the Agent on how to respond safely."
+                    },
+                    "user_facing_summary": {
+                      "type": "string",
+                      "description": "Short user-facing summary in the preferred language."
+                    },
                     "safe_next_steps": {
                       "type": "array",
-                      "items": { "type": "string" }
+                      "description": "Safe, practical, non-medical next steps.",
+                      "items": {
+                        "type": "string",
+                        "description": "A safe practical next step."
+                      }
                     },
                     "avoid": {
                       "type": "array",
-                      "items": { "type": "string" }
+                      "description": "Things the user should avoid doing in the current state.",
+                      "items": {
+                        "type": "string",
+                        "description": "A thing to avoid."
+                      }
                     },
-                    "safety_disclaimer": { "type": "string" }
+                    "safety_disclaimer": {
+                      "type": "string",
+                      "description": "Safety disclaimer explaining that this is not medical, psychiatric, therapeutic, or emergency care."
+                    }
                   }
                 }
               }

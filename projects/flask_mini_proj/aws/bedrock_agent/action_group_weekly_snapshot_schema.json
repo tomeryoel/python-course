@@ -3,15 +3,18 @@
   "info": {
     "title": "Weekly Wellness Snapshot",
     "version": "1.0.0",
-    "description": "Generates a weekly wellness summary from tasks and recent topics."
+    "description": "Generates a non-medical weekly wellness summary from available app context, tasks, and recent topics."
   },
   "paths": {
-    "/weekly_wellness_snapshot": {
+    "/weekly": {
+      "description": "Creates a non-medical weekly wellness snapshot from available completed tasks, open tasks, recent topics, or recent app context. If no task data is available, the tool should return a safe general summary instead of asking the user to provide the missing data.",
       "post": {
         "summary": "Generate weekly wellness snapshot",
-        "operationId": "weekly_wellness_snapshot",
+        "description": "Generates a calm, practical, non-medical weekly wellness snapshot. This action does not provide diagnosis, therapy, psychiatric advice, medication advice, or emergency care. Missing task fields are allowed.",
+        "operationId": "snapshot",
         "requestBody": {
-          "required": true,
+          "required": false,
+          "description": "Optional weekly task and topic information. If not provided, the Lambda should use available recent context or return a safe fallback.",
           "content": {
             "application/json": {
               "schema": {
@@ -19,23 +22,36 @@
                 "properties": {
                   "completed_tasks": {
                     "type": "array",
-                    "items": { "type": "string" },
-                    "description": "List of completed task titles"
+                    "description": "Optional list of completed task titles.",
+                    "items": {
+                      "type": "string",
+                      "description": "Completed task title."
+                    }
                   },
                   "open_tasks": {
                     "type": "array",
-                    "items": { "type": "string" },
-                    "description": "List of open task titles"
+                    "description": "Optional list of open task titles.",
+                    "items": {
+                      "type": "string",
+                      "description": "Open task title."
+                    }
                   },
                   "recent_topics": {
                     "type": "array",
-                    "items": { "type": "string" },
-                    "description": "Recent wellness topics"
+                    "description": "Optional list of recent wellness topics such as sleep, stress, memory, overload, grounding, or daily routine.",
+                    "items": {
+                      "type": "string",
+                      "description": "Recent wellness topic."
+                    }
+                  },
+                  "recent_context_summary": {
+                    "type": "string",
+                    "description": "Optional summary of recent app conversation or app-level memory."
                   },
                   "language": {
                     "type": "string",
                     "enum": ["he", "en"],
-                    "description": "Response language"
+                    "description": "Optional response language. Use he for Hebrew and en for English."
                   }
                 }
               }
@@ -44,17 +60,36 @@
         },
         "responses": {
           "200": {
-            "description": "Weekly snapshot",
+            "description": "Weekly snapshot generated successfully.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "week_summary": { "type": "string" },
-                    "completed_tasks": { "type": "integer" },
-                    "open_tasks": { "type": "integer" },
-                    "encouragement": { "type": "string" },
-                    "next_focus": { "type": "string" }
+                    "week_summary": {
+                      "type": "string",
+                      "description": "Short summary of the user's weekly wellness state."
+                    },
+                    "completed_tasks": {
+                      "type": "integer",
+                      "description": "Number of completed tasks."
+                    },
+                    "open_tasks": {
+                      "type": "integer",
+                      "description": "Number of open tasks."
+                    },
+                    "encouragement": {
+                      "type": "string",
+                      "description": "Calm encouragement text for the user."
+                    },
+                    "next_focus": {
+                      "type": "string",
+                      "description": "Suggested practical focus for the next period."
+                    },
+                    "disclaimer": {
+                      "type": "string",
+                      "description": "Safety disclaimer that this is not medical care or diagnosis."
+                    }
                   }
                 }
               }

@@ -77,12 +77,18 @@ Tool behavior:
 
 ## 4. Lambda Action Groups
 
-### Tool 1: Weekly Wellness Snapshot
+### Tool 1: Weekly Wellness Snapshot (`weekly` Action Group)
 
 1. Create Lambda `ptsd-weekly-wellness-snapshot` from `aws/lambda/weekly_wellness_snapshot/lambda_function.py`.
 2. Runtime: Python 3.14 (or latest).
 3. Test with `test_event.json`.
-4. Add Action Group using `action_group_weekly_snapshot_schema.json`.
+4. Add Action Group **`weekly`** using `action_group_weekly_snapshot_schema.json` (path `/weekly`, operationId `snapshot`).
+
+**Flask app behavior:** When the user asks for a weekly summary in `/api/chat`, Flask automatically
+collects tasks from `tasks.json` and recent messages from SQLite, then appends a hidden
+`[APP_CONTEXT_FOR_WEEKLY_SNAPSHOT]` block to the Agent prompt. The Agent should use this context
+and call the `weekly` tool — **not** ask the user to manually list completed/open tasks when
+app context is provided. If no task data exists, the Agent should say so and reflect on recent chat context.
 
 ### Tool 2: Stress Check-in Classifier (required)
 

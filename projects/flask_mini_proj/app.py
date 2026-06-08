@@ -36,6 +36,7 @@ from tools import (
     invoke_stress_check_in,
     invoke_weekly_snapshot,
 )
+from weekly_context import augment_message_for_weekly_snapshot, is_weekly_snapshot_request
 
 load_dotenv()
 
@@ -155,13 +156,24 @@ def create_app() -> Flask:
         chat_store.add_message(conversation_id, "user", message)
 
         locale = detect_locale(message)
+        agent_input = message
+        if is_weekly_snapshot_request(message):
+            lang = "en" if locale == "en" else "he"
+            agent_input = augment_message_for_weekly_snapshot(
+                message, conversation_id, language=lang
+            )
+            logger.info(
+                "[app] weekly snapshot request — app context injected | conv=%s",
+                conversation_id[:12],
+            )
+
         logger.info(
-            "[app] chat | conv=%s locale=%s backend=bedrock_agent",
-            conversation_id[:12], locale,
+            "[app] chat | conv=%s locale=%s backend=bedrock_agent weekly=%s",
+            conversation_id[:12], locale, agent_input != message,
         )
 
         result = answer_with_agent(
-            message=message,
+            message=agent_input,
             conversation_id=conversation_id,
             memory_context=memory_context,
             agent_session_id=agent_session_id,

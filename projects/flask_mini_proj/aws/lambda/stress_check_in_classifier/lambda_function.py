@@ -1,3 +1,5 @@
+import json
+
 """
 Stress Check-in Classifier — Bedrock Agent Action Group tool (Lambda).
 
@@ -7,7 +9,7 @@ for the Bedrock Agent. Rule-based only — no LLM, no diagnosis, no medical advi
 Supports direct Lambda console tests and Bedrock Agent Action Group events.
 """
 
-from __future__ import annotations
+# from __future__ import annotations
 
 import json
 from typing import Any
@@ -339,15 +341,20 @@ def _build_result(
     }
 
 
-def _agent_response(action_group: str, function: str, body: dict) -> dict:
+def _agent_response(event: dict, body: dict, status_code: int = 200) -> dict:
+    """
+    Bedrock Agent response format for Action Groups created with OpenAPI/API schema.
+    """
     return {
         "messageVersion": "1.0",
         "response": {
-            "actionGroup": action_group,
-            "function": function,
-            "functionResponse": {
-                "responseBody": {
-                    "TEXT": {"body": json.dumps(body, ensure_ascii=False)},
+            "actionGroup": event.get("actionGroup", "stress"),
+            "apiPath": event.get("apiPath", "/stress"),
+            "httpMethod": event.get("httpMethod", "POST"),
+            "httpStatusCode": status_code,
+            "responseBody": {
+                "application/json": {
+                    "body": json.dumps(body, ensure_ascii=False)
                 }
             },
         },
@@ -355,15 +362,64 @@ def _agent_response(action_group: str, function: str, body: dict) -> dict:
 
 
 def lambda_handler(event, context):
-    data = _unwrap_event(event if isinstance(event, dict) else {})
-    result = _classify(data)
+    try:
+        print("Received event:", json.dumps(event, ensure_ascii=False))
 
-    if isinstance(event, dict) and ("actionGroup" in event or "agent" in event):
-        ag = event.get("actionGroup", "StressCheckInClassifier")
-        fn = event.get("function", "stress_check_in_classifier")
-        return _agent_response(ag, fn, result)
+        safe_event = event if isinstance(event, dict) else {}
+        data = _unwrap_event(safe_event)
+        print("Extracted data:", json.dumps(data, ensure_ascii=False))
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps(result, ensure_ascii=False),
-    }
+        result = _classify(data)
+        print("Result:", json.dumps(result, ensure_ascii=False))
+
+        # Bedrock Agent Action Group invocation
+        if isinstance(event, dict) and ("actionGroup" in event or "apiPath" in event):
+            return _agent_response(event, result, 200)
+
+        # Direct Lambda console test
+        return {
+            "statusCode": 200,
+            "body": json.dumps(result, ensure_ascii=False),
+        }
+
+    except Exception as exc:
+        print("Unhandled error:", str(exc))
+
+        fallback = {
+            "classification": "medium",
+            "confidence": "low",
+            "recommended_route": "kb_answer_short",
+            "response_mode": "short",
+            "should_use_knowledge_base": True,
+            "should_start_with_grounding": True,
+            "should_offer_trusted_contact_message": False,
+            "should_recommend_professional_support": False,
+            "should_recommend_emergency_support": False,
+            "agent_instruction": (
+                "The stress classifier failed internally. Give a short, calm, safe answer. "
+                "Use the Knowledge Base only if appropriate. Do not provide medical advice."
+            ),
+            "user_facing_summary": (
+                "הייתה תקלה בסיווג המצב, לכן כדאי לענות בזהירות, בקצרה ועל בסיס המסמכים בלבד."
+            ),
+            "safe_next_steps": [
+                "ענה בקצרה ובזהירות.",
+                "אל תיתן ייעוץ רפואי.",
+                "אם יש סימן לסכנה — הפנה לעזרה אנושית מיידית."
+            ],
+            "avoid": [
+                "לא להמציא מידע.",
+                "לא לתת המלצה רפואית.",
+                "לא להציג את האפליקציה כשירות חירום."
+            ],
+            "safety_disclaimer": DISCLAIMER_HE,
+            "error": str(exc),
+        }
+
+        if isinstance(event, dict) and ("actionGroup" in event or "apiPath" in event):
+            return _agent_response(event, fallback, 200)
+
+        return {
+            "statusCode": 200,
+            "body": json.dumps(fallback, ensure_ascii=False),
+        }
