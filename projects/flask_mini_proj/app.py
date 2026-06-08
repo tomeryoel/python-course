@@ -20,7 +20,7 @@ import chat_store
 from agent_engine import AGENT_CONFIG_ERROR, answer_with_agent, is_agent_configured
 from documents import DocumentError, save_upload
 from kb_status import get_knowledge_base_status, list_s3_documents
-from response_utils import api_error, apply_medication_disclaimer, detect_locale
+from response_utils import api_error, detect_locale, sanitize_agent_answer
 from tasks import (
     TasksError,
     TasksFileError,
@@ -28,6 +28,7 @@ from tasks import (
     delete_task,
     extract_tasks_from_text,
     get_all_tasks,
+    get_tasks_path,
     update_task,
 )
 from tools import (
@@ -37,7 +38,13 @@ from tools import (
     invoke_weekly_snapshot,
 )
 from json_utils import json_safe
-from weekly_context import augment_message_for_weekly_snapshot, is_weekly_snapshot_request
+from weekly_context import (
+    build_weekly_app_context,
+    format_weekly_app_context_block,
+    is_task_context_request,
+    is_weekly_snapshot_request,
+    should_inject_app_context,
+)
 
 load_dotenv()
 
@@ -157,20 +164,38 @@ def create_app() -> Flask:
         chat_store.add_message(conversation_id, "user", message)
 
         locale = detect_locale(message)
+        weekly = is_weekly_snapshot_request(message)
+        task_context = is_task_context_request(message)
         agent_input = message
-        if is_weekly_snapshot_request(message):
+        context_meta: dict = {}
+
+        if should_inject_app_context(message):
             lang = "en" if locale == "en" else "he"
-            agent_input = augment_message_for_weekly_snapshot(
-                message, conversation_id, language=lang
-            )
-            logger.info(
-                "[app] weekly snapshot request — app context injected | conv=%s",
-                conversation_id[:12],
-            )
+            ctx = build_weekly_app_context(conversation_id, language=lang)
+            context_meta = {
+                "tasks_path": ctx.get("tasks_path"),
+                "tasks_file_exists": ctx.get("tasks_file_exists"),
+                "completed_tasks_count": ctx.get("completed_tasks_count"),
+                "open_tasks_count": ctx.get("open_tasks_count"),
+                "recent_topics": ctx.get("recent_topics"),
+            }
+            agent_input = message + format_weekly_app_context_block(ctx)
 
         logger.info(
-            "[app] chat | conv=%s locale=%s backend=bedrock_agent weekly=%s",
-            conversation_id[:12], locale, agent_input != message,
+            "[app] chat | conv=%s locale=%s backend=bedrock_agent weekly=%s task_context=%s "
+            "tasks_path=%s tasks_file_exists=%s completed_tasks_count=%s open_tasks_count=%s "
+            "recent_topics=%s app_context_appended=%s final_agent_input_len=%s",
+            conversation_id[:12],
+            locale,
+            weekly,
+            task_context,
+            context_meta.get("tasks_path", get_tasks_path() if should_inject_app_context(message) else "-"),
+            context_meta.get("tasks_file_exists", False),
+            context_meta.get("completed_tasks_count", 0),
+            context_meta.get("open_tasks_count", 0),
+            context_meta.get("recent_topics", []),
+            agent_input != message,
+            len(agent_input),
         )
 
         result = answer_with_agent(
@@ -187,7 +212,7 @@ def create_app() -> Flask:
                 "conversation_id": conversation_id,
             }), 503
 
-        answer = apply_medication_disclaimer(result["answer"], message, locale)
+        answer = sanitize_agent_answer(result["answer"], message, locale)
         chat_store.add_message(conversation_id, "assistant", answer)
         chat_store.update_conversation_summary(
             conversation_id,

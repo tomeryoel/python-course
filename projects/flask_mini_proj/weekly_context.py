@@ -1,21 +1,22 @@
 """
-Weekly snapshot request detection and app-level context injection for /api/chat.
+Weekly snapshot / task-board request detection and app-level context injection for /api/chat.
 
-When the user asks for a weekly summary, Flask collects tasks + SQLite chat memory
-and appends a hidden context block to the Agent prompt (not saved as the user message).
+When the user asks about tasks, weekly summary, or the task board, Flask collects
+tasks + SQLite chat memory and appends a hidden context block to the Agent prompt.
 """
 
 from __future__ import annotations
 
+import os
 import re
 from typing import Any
 
 from json_utils import dumps_json_safe, json_safe
 
 import chat_store
-from tasks import TasksFileError, get_all_tasks
+from tasks import TasksFileError, get_all_tasks, get_tasks_path
 
-# --- Weekly request detection (deterministic, no LLM) ---
+# --- Weekly / task context detection (deterministic, no LLM) ---
 
 _WEEKLY_PHRASES_HE = [
     "סיכום שבועי",
@@ -27,6 +28,7 @@ _WEEKLY_PHRASES_HE = [
     "תכין לי סיכום שבועי",
     "סיכום של השבוע",
     "סיכום השבוע",
+    "תסכם לי את המשימות",
 ]
 _WEEKLY_PHRASES_EN = [
     "weekly snapshot",
@@ -38,8 +40,42 @@ _WEEKLY_PHRASES_EN = [
     "my week in review",
 ]
 
+_TASK_CONTEXT_PHRASES_HE = [
+    "לוח המשימות",
+    "משימות שסימנתי",
+    "סימנתי שם",
+    "מה עשיתי",
+    "מה השלמתי",
+    "משימות שהושלמו",
+    "משימות פתוחות",
+    "אין לך גישה ללוח המשימות",
+    "תבדוק את המשימות",
+    "תסכם לי את המשימות",
+    "גישה ללוח",
+    "סימנתי כבר",
+    "מה שעשיתי",
+    "המשימות שלי",
+    "המשימות שביצעתי",
+]
+_TASK_CONTEXT_PHRASES_EN = [
+    "task board",
+    "tasks i completed",
+    "completed tasks",
+    "open tasks",
+    "what i did this week",
+    "what is left to do",
+    "summarize my tasks",
+    "my tasks",
+    "tasks i marked",
+    "marked as done",
+]
+
 _WEEKLY_PATTERN = re.compile(
     "|".join(re.escape(p) for p in _WEEKLY_PHRASES_HE + _WEEKLY_PHRASES_EN),
+    re.IGNORECASE,
+)
+_TASK_CONTEXT_PATTERN = re.compile(
+    "|".join(re.escape(p) for p in _TASK_CONTEXT_PHRASES_HE + _TASK_CONTEXT_PHRASES_EN),
     re.IGNORECASE,
 )
 
@@ -80,12 +116,25 @@ _TOPIC_KEYWORDS: dict[str, str] = {
 }
 
 
+def is_task_context_request(message: str) -> bool:
+    """Return True if the user refers to the app task board or marked tasks."""
+    text = (message or "").strip()
+    if not text:
+        return False
+    return bool(_TASK_CONTEXT_PATTERN.search(text))
+
+
 def is_weekly_snapshot_request(message: str) -> bool:
     """Return True if the user message is asking for a weekly wellness snapshot."""
     text = (message or "").strip()
     if not text:
         return False
     return bool(_WEEKLY_PATTERN.search(text))
+
+
+def should_inject_app_context(message: str) -> bool:
+    """Weekly summary OR task-board phrasing → inject app context for the Agent."""
+    return is_weekly_snapshot_request(message) or is_task_context_request(message)
 
 
 def infer_recent_topics(user_messages: list[str]) -> list[str]:
@@ -141,12 +190,15 @@ def build_weekly_app_context(
     language: str = "he",
 ) -> dict[str, Any]:
     """
-    Collect app-level context for weekly snapshot requests.
+    Collect app-level context for weekly snapshot / task-board requests.
 
-    Tasks come from tasks.json (not SQLite). If unavailable, completed/open stay empty.
+    Tasks come from tasks.json via get_all_tasks() — same path as /api/tasks.
     """
     lang = "en" if language.lower().startswith("en") else "he"
     user_messages = _collect_user_messages(conversation_id)
+
+    tasks_path = get_tasks_path()
+    tasks_file_exists = os.path.isfile(tasks_path)
 
     completed_tasks: list[str] = []
     open_tasks: list[str] = []
@@ -183,18 +235,33 @@ def build_weekly_app_context(
         "recent_topics": recent_topics[:10],
         "recent_context_summary": _build_recent_context_summary(user_messages, lang),
         "language": lang,
+        "tasks_path": tasks_path,
+        "tasks_file_exists": tasks_file_exists,
+        "completed_tasks_count": len(completed_tasks),
+        "open_tasks_count": len(open_tasks),
     })
 
 
 def format_weekly_app_context_block(context: dict[str, Any]) -> str:
     """Hidden block appended to the Agent prompt (not shown in UI chat history)."""
+    agent_ctx = {
+        k: v for k, v in context.items()
+        if k not in (
+            "tasks_path",
+            "tasks_file_exists",
+            "completed_tasks_count",
+            "open_tasks_count",
+        )
+    }
     return (
         "\n\n[APP_CONTEXT_FOR_WEEKLY_SNAPSHOT]\n"
-        f"completed_tasks: {dumps_json_safe(context.get('completed_tasks', []), ensure_ascii=False)}\n"
-        f"open_tasks: {dumps_json_safe(context.get('open_tasks', []), ensure_ascii=False)}\n"
-        f"recent_topics: {dumps_json_safe(context.get('recent_topics', []), ensure_ascii=False)}\n"
-        f"recent_context_summary: {context.get('recent_context_summary', '')}\n"
-        f"language: {context.get('language', 'he')}\n"
+        "The Flask app provides this task/chat context. Use it — do not ask the user "
+        "to manually list completed or open tasks when this block is present.\n"
+        f"completed_tasks: {dumps_json_safe(agent_ctx.get('completed_tasks', []), ensure_ascii=False)}\n"
+        f"open_tasks: {dumps_json_safe(agent_ctx.get('open_tasks', []), ensure_ascii=False)}\n"
+        f"recent_topics: {dumps_json_safe(agent_ctx.get('recent_topics', []), ensure_ascii=False)}\n"
+        f"recent_context_summary: {agent_ctx.get('recent_context_summary', '')}\n"
+        f"language: {agent_ctx.get('language', 'he')}\n"
         "[/APP_CONTEXT_FOR_WEEKLY_SNAPSHOT]"
     )
 

@@ -20,6 +20,7 @@ import re
 from typing import Any
 
 from json_utils import dumps_json_safe, json_safe
+from source_utils import format_sources_for_api
 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError, PartialCredentialsError
@@ -157,12 +158,12 @@ def parse_agent_response(response: dict) -> dict[str, Any]:
             seen.add(key)
             unique_sources.append(s)
 
-    return {
+    return json_safe({
         "answer": "".join(answer_parts).strip(),
-        "sources": unique_sources,
+        "sources": format_sources_for_api(unique_sources),
         "tool_calls": tool_calls,
         "trace_summary": trace_summary[:5],
-    }
+    })
 
 
 def invoke_bedrock_agent(

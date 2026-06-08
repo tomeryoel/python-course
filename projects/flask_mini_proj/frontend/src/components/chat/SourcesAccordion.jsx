@@ -13,7 +13,7 @@ export default function SourcesAccordion({ sources }) {
       <ul className="mt-2 space-y-1.5 rounded-lg border border-glass-border bg-black/20 p-3">
         {sources.map((s, j) => (
           <li key={j} className="leading-relaxed text-slate-400">
-            {s.text_preview || s.uri || `מקור ${s.index}`}
+            {s.display_name || s.text_preview || s.uri || `מקור ${j + 1}`}
           </li>
         ))}
       </ul>

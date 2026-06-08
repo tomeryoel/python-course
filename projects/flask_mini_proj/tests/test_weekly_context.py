@@ -6,8 +6,16 @@ from weekly_context import (
     build_weekly_app_context,
     format_weekly_app_context_block,
     infer_recent_topics,
+    is_task_context_request,
     is_weekly_snapshot_request,
+    should_inject_app_context,
 )
+
+
+def test_task_context_detection_hebrew():
+    assert is_task_context_request("אין לך גישה ללוח המשימות? סימנתי שם")
+    assert should_inject_app_context("לוח המשימות")
+    assert should_inject_app_context("משימות שסימנתי")
 
 
 def test_weekly_request_detection_hebrew():
@@ -21,8 +29,8 @@ def test_weekly_request_detection_english():
 
 
 def test_non_weekly_message_not_detected():
-    assert not is_weekly_snapshot_request("מה ההמלצות לשינה לפי המסמכים?")
-    assert not is_weekly_snapshot_request("שלום")
+    assert not should_inject_app_context("מה ההמלצות לשינה לפי המסמכים?")
+    assert not should_inject_app_context("שלום")
 
 
 def test_infer_recent_topics_from_messages():
@@ -70,8 +78,11 @@ def test_context_builder_loads_tasks_from_json(tmp_path, monkeypatch, sample_tas
     chat_store.DB_PATH = str(db_path)
     chat_store.init_db()
 
+    from tasks import get_tasks_path
+
     ctx = build_weekly_app_context(None, language="he")
-    assert ctx["open_tasks"]  # sample_tasks has one open task
+    assert ctx["open_tasks"]
+    assert ctx["tasks_path"] == get_tasks_path()
 
 
 def test_format_weekly_block_contains_marker():
