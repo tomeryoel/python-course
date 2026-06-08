@@ -1,116 +1,128 @@
-# AWS Setup Notes — Bedrock Agent, Knowledge Base, Lambda Tools, Amazon Connect
+# AWS Setup Notes — Bedrock Agent, Knowledge Base (S3 Vectors), Lambda Tools
 
-Manual steps required in AWS Console (not automated by this repo).
+Manual steps in AWS Console (not automated by this repo).
 
 ---
 
-## 1. Architecture overview
+## 1. Target architecture
 
 ```text
-S3 (clinical documents)
-  → Bedrock Knowledge Base (sync/index)
-  → Bedrock Agent (orchestration + RAG + tools)
+S3 clinical documents (data/)
+  → Bedrock Knowledge Base (S3 Vectors vector store)
+  → Bedrock Agent (RAG + Action Groups)
   → Flask invoke_agent (boto3)
   → React UI
 ```
 
-OpenSearch Serverless (if created behind the KB) is **AWS-managed vector storage** — do not query it from Flask.
+**Flask never queries OpenSearch.** Vector storage is **S3 Vectors** behind the Knowledge Base.
+
+If an older KB used **OpenSearch Serverless**, see README **Cost control** section to delete it.
 
 ---
 
-## 2. S3 + Knowledge Base (already done in your project)
+## 2. S3 + Knowledge Base (S3 Vectors)
 
-1. Upload 6 clinical documents to S3 bucket under prefix `data/`.
-2. Create Bedrock Knowledge Base with S3 data source.
-3. Sync until **6 documents indexed**.
-4. Note `BEDROCK_KNOWLEDGE_BASE_ID` and `S3_BUCKET_NAME`.
-
-Screenshot: KB screen + data source sync status.
-
----
-
-## 3. Create Bedrock Agent
-
-1. AWS Console → **Amazon Bedrock** → **Agents** → **Create agent**.
-2. Name: e.g. `PTSD-Companion-Agent`.
-3. Select foundation model (Amazon Nova or Claude 3).
-4. Instructions (Hebrew-friendly system prompt): calm wellness companion, use KB for RAG only, medication disclaimers, refuse unsafe medical advice.
-5. **Add Knowledge Base** — attach your existing KB.
-6. Save agent ID → `BEDROCK_AGENT_ID`.
+1. Upload clinical documents to S3 under prefix `data/`.
+2. **Amazon Bedrock → Knowledge Bases → Create**.
+3. Choose **S3** as data source.
+4. For vector store, select **S3 Vectors** (preferred) — **not** OpenSearch Serverless.
+5. Sync until documents are indexed.
+6. Note `BEDROCK_KNOWLEDGE_BASE_ID` and `S3_BUCKET_NAME`.
 
 ---
 
-## 4. Lambda Action Groups (MCP-style tools)
+## 3. Bedrock Agent + instructions
+
+1. **Agents → Create agent** (e.g. `PTSD-Companion-Agent`).
+2. Foundation model: Amazon Nova or Claude.
+3. **Agent instructions** (paste/adapt):
+
+```
+You are a calm, supportive digital wellness companion for a PTSD-support demo application.
+
+Language behavior:
+- Respond in Hebrew by default.
+- If the user explicitly asks for English, answer in English for that response.
+- If the user asks to continue in English, continue in English.
+- If the user returns to Hebrew, respond in Hebrew again.
+
+Knowledge Base behavior:
+- Use the connected Bedrock Knowledge Base as the source of truth for answers based on uploaded clinical documents.
+- Do not invent therapist instructions, psychiatrist instructions, medication instructions, diagnoses, treatment plans, or clinical facts.
+- If the requested information is not found in the Knowledge Base, clearly say that the information does not appear in the uploaded documents.
+- Do not answer clinical-document questions from general knowledge when the Knowledge Base does not contain the answer.
+
+Medical and safety boundaries:
+- You are not a doctor, psychiatrist, psychologist, therapist, emergency service, or medical authority.
+- You do not replace professional medical, psychiatric, psychological, or emergency care.
+- For medication-related questions, summarize only what appears in the uploaded documents and recommend contacting the treating psychiatrist or doctor before making any change.
+- Do not recommend changing, starting, stopping, increasing, or decreasing medication unless this appears explicitly in the uploaded documents, and even then present it only as a document summary, not as personal medical advice.
+- If the user expresses immediate danger, self-harm risk, or emergency, encourage contacting local emergency services or trusted human support immediately.
+
+Tool behavior:
+- Use the Knowledge Base for document-based questions.
+- Use the weekly wellness snapshot tool when the user asks for a weekly summary or wellness overview, if configured.
+- Use the stress check-in classifier tool when the user feels stressed, overwhelmed, confused, overloaded, dysregulated, unsafe, or asks what to do right now.
+- The stress check-in classifier does not diagnose and does not provide medical care. It only returns safe routing guidance.
+- If the classifier returns "low", answer normally from the Knowledge Base.
+- If the classifier returns "medium", answer shortly and calmly using the Knowledge Base.
+- If the classifier returns "high", start with one grounding step, then provide only the most relevant document-based guidance.
+- If the classifier returns "crisis", do not treat it as a normal RAG question. Encourage immediate human support, trusted support, professional support, or local emergency services. Keep the response short and direct.
+```
+
+4. **Add Knowledge Base** — attach your S3 Vectors-backed KB.
+5. Save → `BEDROCK_AGENT_ID`.
+
+---
+
+## 4. Lambda Action Groups
 
 ### Tool 1: Weekly Wellness Snapshot
 
 1. Create Lambda `ptsd-weekly-wellness-snapshot` from `aws/lambda/weekly_wellness_snapshot/lambda_function.py`.
-2. Test with `test_event.json`.
-3. Add Action Group to Agent using `action_group_weekly_snapshot_schema.json`.
-4. Grant Bedrock permission to invoke Lambda (see `aws/iam/bedrock_agent_lambda_permission.md`).
+2. Runtime: Python 3.14 (or latest).
+3. Test with `test_event.json`.
+4. Add Action Group using `action_group_weekly_snapshot_schema.json`.
 
-### Tool 2: Emergency Contact Voice Call
+### Tool 2: Stress Check-in Classifier (required)
 
-1. Create Lambda `ptsd-emergency-contact-voice-call` from `aws/lambda/emergency_contact_voice_call/lambda_function.py`.
-2. Set Connect env vars (section 5).
-3. Attach IAM policy `lambda_connect_policy.json`.
-4. Add Action Group using `action_group_emergency_call_schema.json`.
+1. Create Lambda `ptsd-stress-check-in-classifier`:
+   - Runtime: **Python 3.14**
+   - Code: `aws/lambda/stress_check_in_classifier/lambda_function.py`
+   - If Console does not show Architecture field, keep default.
+2. Test with:
+   - `test_event_low.json`
+   - `test_event_medium.json`
+   - `test_event_high.json`
+   - `test_event_crisis.json`
+3. Add Action Group:
+   - Name: `stress_check_in_classifier`
+   - Schema: `action_group_stress_check_in_classifier_schema.json`
+4. Lambda permission for Bedrock:
 
-**Important:** Configure Agent instructions so the emergency tool is **never** called without user confirmation.
+```bash
+aws lambda add-permission \
+  --function-name ptsd-stress-check-in-classifier \
+  --statement-id AllowBedrockAgentInvokeStressCheckInClassifier \
+  --action lambda:InvokeFunction \
+  --principal bedrock.amazonaws.com \
+  --source-arn arn:aws:bedrock:us-east-1:<ACCOUNT_ID>:agent/<BEDROCK_AGENT_ID> \
+  --region us-east-1
+```
+
+Repeat for weekly snapshot Lambda. See `aws/iam/bedrock_agent_lambda_permission.md`.
+
+### Tool 3: Emergency Contact Voice Call (optional / future)
+
+Code exists at `aws/lambda/emergency_contact_voice_call/` for Amazon Connect.
+**Not required** if Connect is unavailable. Do not block submission on this tool.
 
 ---
 
-## 5. Amazon Connect setup
+## 5. Agent Alias + Flask .env
 
-### 5.1 Create instance
-
-1. AWS Console → **Amazon Connect** → **Create instance**.
-2. Choose **Store users in Amazon Connect** (simplest for demo).
-3. Note **Instance ID** → `CONNECT_INSTANCE_ID`.
-
-### 5.2 Claim phone number
-
-1. In Connect → **Phone numbers** → **Claim**.
-2. Choose a number capable of **outbound** calls in your region.
-3. Note E.164 format → `CONNECT_SOURCE_PHONE_NUMBER` (e.g. `+972...`).
-
-**Cost warning:** Connect charges per minute for outbound calls + monthly number fee.
-
-### 5.3 Create Contact Flow
-
-1. **Routing** → **Contact flows** → **Create contact flow** → **Outbound whisper flow**.
-2. Add **Play prompt** block with text (Hebrew):
-
-   > שלום, זו הודעת תמיכה אוטומטית ממערכת ה-wellness companion. המשתמש שהגדיר אותך כאיש קשר חירום ביקש ליצור איתך קשר. מומלץ ליצור איתו קשר בהקדם ולוודא שהוא בסדר. הודעה זו אינה שירות חירום רפואי.
-
-3. Use attributes from Lambda (`$.Attributes.user_display_name`, etc.) if needed.
-4. Publish flow and note **Contact flow ID** → `CONNECT_CONTACT_FLOW_ID`.
-
-### 5.4 Lambda environment
-
-On `ptsd-emergency-contact-voice-call`:
-
-```
-CONNECT_INSTANCE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-CONNECT_CONTACT_FLOW_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-CONNECT_SOURCE_PHONE_NUMBER=+972XXXXXXXXX
-EMERGENCY_CONTACT_PHONE=+972XXXXXXXXX
-```
-
-### 5.5 Test safely
-
-- Use **your own phone number** as emergency contact.
-- Require UI confirmation before triggering.
-- This is **not** 101/100 — educational demo only.
-
----
-
-## 6. Agent Alias + Flask .env
-
-1. In Agent → **Prepare** → create **Alias** (e.g. `prod`).
+1. Agent → **Prepare** → create **Alias** (e.g. `prod`).
 2. Note alias ID → `BEDROCK_AGENT_ALIAS_ID`.
-
-Flask `.env`:
 
 ```env
 BEDROCK_AGENT_ID=...
@@ -118,35 +130,52 @@ BEDROCK_AGENT_ALIAS_ID=...
 BEDROCK_KNOWLEDGE_BASE_ID=...
 S3_BUCKET_NAME=...
 S3_PREFIX=data/
+STRESS_CHECK_IN_LAMBDA_NAME=ptsd-stress-check-in-classifier
+WEEKLY_SNAPSHOT_LAMBDA_NAME=ptsd-weekly-wellness-snapshot
+ENABLE_LEGACY_FAISS=false
 AWS_REGION=us-east-1
 ```
 
 ---
 
-## 7. EC2 IAM role
-
-Attach to EC2 instance role:
+## 6. EC2 IAM role
 
 - `ec2_invoke_agent_policy.json`
-- `ec2_invoke_lambda_tools_policy.json` (if using direct tool demo endpoints)
-- Optional: `s3:ListBucket`, `s3:GetObject` on your bucket
+- `ec2_invoke_lambda_tools_policy.json` (demo endpoints only)
+- Optional: `s3:ListBucket` for document list UI
 
 ---
 
-## 8. Cleanup
+## 7. Cost control — delete legacy OpenSearch Serverless
 
-After grading, delete in order:
+If an **old** Knowledge Base used OpenSearch Serverless and is billing daily:
 
-1. Stop/terminate EC2.
+1. **Do NOT delete** the S3 bucket with clinical documents.
+2. **Do NOT delete** the new S3 Vectors-backed KB if working.
+3. Bedrock → Knowledge Bases → delete old OpenSearch-backed KB.
+4. OpenSearch Service → Serverless → Collections → Delete collection.
+5. Deletion is **irreversible**.
+6. Check Billing / Cost Explorer.
+
+```bash
+aws opensearchserverless list-collections --region us-east-1
+aws opensearchserverless delete-collection --id <COLLECTION_ID> --region us-east-1
+```
+
+---
+
+## 8. Cleanup after grading
+
+1. Terminate EC2.
 2. Delete Bedrock Agent.
-3. Delete Knowledge Base + OpenSearch collection (if created).
+3. Delete Knowledge Base (project-only).
 4. Delete Lambda functions.
-5. Release Connect phone number + delete Connect instance (if demo-only).
-6. Empty/delete S3 bucket if project-only.
-7. Check **AWS Billing / Cost Explorer**.
+5. Delete legacy OpenSearch collection (if any).
+6. Release Connect resources (only if created).
+7. Check AWS Billing.
 
 ---
 
-## 9. Screenshots checklist
+## 9. Screenshots
 
-See README **Submission Screenshot Checklist** section.
+See README **Submission screenshot checklist**.

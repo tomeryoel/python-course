@@ -1,0 +1,108 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Stress Check-in Classifier",
+    "version": "1.0.0",
+    "description": "Classify the user's current stress, confusion, overload, or crisis state and return safe routing guidance for the Agent."
+  },
+  "paths": {
+    "/stress-check-in-classifier": {
+      "post": {
+        "summary": "Classify stress/overload state and return Agent routing guidance",
+        "operationId": "stress_check_in_classifier",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_message": {
+                    "type": "string",
+                    "description": "The user's current message"
+                  },
+                  "self_reported_stress_level": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10,
+                    "description": "Optional self-reported stress 1-10"
+                  },
+                  "confusion_level": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10,
+                    "description": "Optional confusion level 1-10"
+                  },
+                  "has_immediate_danger": {
+                    "type": "boolean",
+                    "description": "Immediate danger flag"
+                  },
+                  "mentions_self_harm": {
+                    "type": "boolean",
+                    "description": "Self-harm mention flag"
+                  },
+                  "wants_human_support": {
+                    "type": "boolean",
+                    "description": "User wants human support"
+                  },
+                  "preferred_language": {
+                    "type": "string",
+                    "enum": ["he", "en"],
+                    "description": "Response language"
+                  },
+                  "recent_context_summary": {
+                    "type": "string",
+                    "description": "Optional recent conversation context"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Classification and routing guidance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "classification": {
+                      "type": "string",
+                      "enum": ["low", "medium", "high", "crisis"]
+                    },
+                    "confidence": {
+                      "type": "string",
+                      "enum": ["low", "medium", "high"]
+                    },
+                    "recommended_route": { "type": "string" },
+                    "response_mode": {
+                      "type": "string",
+                      "enum": ["normal", "short", "very_short", "crisis_safe"]
+                    },
+                    "should_use_knowledge_base": { "type": "boolean" },
+                    "should_start_with_grounding": { "type": "boolean" },
+                    "should_offer_trusted_contact_message": { "type": "boolean" },
+                    "should_recommend_professional_support": { "type": "boolean" },
+                    "should_recommend_emergency_support": { "type": "boolean" },
+                    "agent_instruction": { "type": "string" },
+                    "user_facing_summary": { "type": "string" },
+                    "safe_next_steps": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "avoid": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "safety_disclaimer": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

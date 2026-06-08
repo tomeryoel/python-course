@@ -33,6 +33,7 @@ from tasks import (
 from tools import (
     build_weekly_snapshot_payload,
     invoke_emergency_call,
+    invoke_stress_check_in,
     invoke_weekly_snapshot,
 )
 
@@ -216,6 +217,14 @@ def create_app() -> Flask:
         payload = data if data.get("completed_tasks") else build_weekly_snapshot_payload(tasks, language)
         result = invoke_weekly_snapshot(payload)
         return jsonify({"status": "success", "snapshot": result})
+
+    @app.route("/api/tools/stress-check-in", methods=["POST"])
+    def api_stress_check_in():
+        """Demo only — normal chat uses Agent Action Group via invoke_agent."""
+        data = request.get_json(silent=True) or {}
+        result = invoke_stress_check_in(data)
+        code = 200 if result.get("classification") else 400
+        return jsonify({"status": "success", "classifier": result}), code
 
     @app.route("/api/tools/emergency-call", methods=["POST"])
     def api_emergency_call():

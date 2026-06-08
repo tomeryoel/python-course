@@ -1,8 +1,8 @@
 """
 Knowledge Base + S3 status helpers for the Documents page and /api/knowledge-base/status.
 
-RAG source of truth: S3 documents → Bedrock Knowledge Base → Bedrock Agent.
-OpenSearch (if present) is AWS-managed storage behind the Knowledge Base only.
+RAG source of truth: S3 documents → Bedrock Knowledge Base (S3 Vectors) → Bedrock Agent.
+Flask never queries OpenSearch or performs vector retrieval directly.
 """
 
 from __future__ import annotations
@@ -83,9 +83,11 @@ def get_knowledge_base_status() -> dict[str, Any]:
         "s3_prefix": prefix,
         "s3_document_count": len(s3_files),
         "s3_error": s3_error,
+        "vector_store": "s3_vectors",
         "note": (
-            "RAG is handled by the Bedrock Agent connected to the Bedrock Knowledge Base. "
-            "Documents are stored in S3 and indexed by the Knowledge Base."
+            "RAG is handled by the Bedrock Agent connected to the Bedrock Knowledge Base "
+            "(S3 Vectors). Documents are stored in S3 under the configured prefix. "
+            "Flask does not query OpenSearch or perform vector retrieval."
         ),
         "legacy_local_faiss": {
             "enabled": os.getenv("ENABLE_LEGACY_FAISS", "false").lower() in ("1", "true", "yes"),

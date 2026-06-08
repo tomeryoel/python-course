@@ -84,6 +84,17 @@ export async function uploadDocument(file, onProgress) {
   return data;
 }
 
+export async function fetchStressCheckIn(payload = {}) {
+  const res = await fetch(`${API}/api/tools/stress-check-in`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "שגיאה");
+  return data.classifier;
+}
+
 export async function fetchWeeklySnapshot(language = "he") {
   const res = await fetch(`${API}/api/tools/weekly-snapshot`, {
     method: "POST",

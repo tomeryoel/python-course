@@ -1,54 +1,47 @@
 # PTSD Companion — Presentation Notes (5–7 minutes)
 
 ## Slide 1 — About Me
-- Name, background, why this project matters personally/professionally
-- One sentence: helping reduce cognitive load for PTSD recovery
+- Personal motivation: reducing cognitive load for PTSD recovery
+- External brain for therapist/psychiatrist instructions
 
 ## Slide 2 — Project Overview
-- PTSD Companion = external brain for therapist instructions, tasks, grounding
-- Hebrew-first, calm tone, safety disclaimers
-- Based only on uploaded clinical documents (S3)
+- Hebrew-first wellness companion
+- Answers only from uploaded clinical documents
+- Safety boundaries and disclaimers
 
-## Slide 3 — Technologies Used
-- **AWS:** S3, Bedrock Knowledge Base, Bedrock Agent, Lambda, Amazon Connect (demo)
-- **Backend:** Flask, boto3, SQLite chat memory
-- **Frontend:** React, Vite, TailwindCSS
-- **DevOps:** Docker, EC2, GitHub
+## Slide 3 — Technologies
+- AWS: S3, Bedrock KB (**S3 Vectors**), Bedrock Agent, Lambda
+- Flask + boto3 `invoke_agent`, SQLite memory
+- React, Docker, EC2
 
 ## Slide 4 — System Architecture
+
 ```text
 User → React → Flask → invoke_agent → Bedrock Agent
                               ↓              ↓
-                         SQLite memory   Knowledge Base ← S3
+                         SQLite memory   Knowledge Base (S3 Vectors) ← S3 data/
                                               ↓
-                                    Lambda tools (weekly snapshot, emergency call)
+                              Lambda tools (weekly snapshot, stress classifier)
 ```
 
-Key points:
-- Agent orchestrates RAG — Flask does not call KB or Lambda directly in the main chat path
-- MCP-style tools = Bedrock Agent Action Groups backed by Lambda
+- Flask does **not** query OpenSearch or S3 for RAG
+- Agent orchestrates KB retrieval and tools
 
-## Slide 5 — Live Demo (script)
-1. Open EC2 public URL (or localhost)
-2. Ask Hebrew question → grounded answer from KB documents (RAG)
-3. Ask follow-up referring to previous question → memory demo
-4. Open previous conversation in sidebar
-5. Home → **Generate Weekly Snapshot** → show JSON summary
-6. **Contact Emergency Support** → show confirmation modal (do NOT call unless intended)
-7. Documents page → show Agent + KB + S3 status
+## Slide 5 — Live Demo
+1. Open EC2 or localhost
+2. Hebrew RAG question from uploaded documents
+3. Follow-up question (memory)
+4. Previous conversations sidebar
+5. Stress/overload scenario → classifier routing
+6. Weekly Snapshot demo
+7. Documents page — KB + Agent status
 
-## Slide 6 — Challenges and Next Steps
-**Challenges:**
-- Aligning architecture with instructor requirements (Agent vs direct KB/FAISS)
-- Bedrock Agent Action Group setup (manual AWS Console)
-- Amazon Connect configuration for outbound demo calls
-- Chat memory + Agent sessionId coordination
-
-**Next steps:**
-- Production hardening (auth, rate limits)
-- Richer Agent traces in UI
-- Optional multilingual documents
+## Slide 6 — Challenges & Next Steps
+- Migrating from OpenSearch Serverless to S3 Vectors (cost control)
+- Bedrock Agent Action Group manual setup
+- Amazon Connect unavailable — replaced stress classifier as required tool
+- Coordinating Agent sessionId + SQLite memory
 
 ## Slide 7 — Q&A
-- Emphasize: not medical advice, emergency feature is demo-only
-- OpenSearch behind KB is AWS-managed — we don't query it from Flask
+- Not medical advice; crisis classifier routes to human/emergency support
+- OpenSearch cleanup for billing — not part of target architecture

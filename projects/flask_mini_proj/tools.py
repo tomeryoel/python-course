@@ -34,6 +34,11 @@ def invoke_weekly_snapshot(payload: dict[str, Any]) -> dict[str, Any]:
     return _invoke_lambda(name, payload)
 
 
+def invoke_stress_check_in(payload: dict[str, Any]) -> dict[str, Any]:
+    name = os.getenv("STRESS_CHECK_IN_LAMBDA_NAME", "ptsd-stress-check-in-classifier")
+    return _invoke_lambda(name, payload)
+
+
 def invoke_emergency_call(payload: dict[str, Any]) -> dict[str, Any]:
     if not payload.get("confirmed"):
         return {

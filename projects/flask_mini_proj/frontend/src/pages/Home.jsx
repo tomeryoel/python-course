@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Anchor, BarChart3, Footprints, Moon, Phone, Pill, Sparkles } from "lucide-react";
-import { fetchTasks, fetchWeeklySnapshot, triggerEmergencyCall } from "../api";
+import { Activity, Anchor, BarChart3, Footprints, Moon, Phone, Pill, Sparkles } from "lucide-react";
+import { fetchStressCheckIn, fetchTasks, fetchWeeklySnapshot, triggerEmergencyCall } from "../api";
 import EmergencyContactModal from "../components/tools/EmergencyContactModal";
 import { Card, CardHeader } from "../components/ui/Card";
 import Button from "../components/ui/Button";
@@ -16,6 +16,9 @@ export default function Home() {
   const [snapshot, setSnapshot] = useState(null);
   const [snapshotLoading, setSnapshotLoading] = useState(false);
   const [snapshotError, setSnapshotError] = useState("");
+  const [stressResult, setStressResult] = useState(null);
+  const [stressLoading, setStressLoading] = useState(false);
+  const [stressError, setStressError] = useState("");
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [emergencyLoading, setEmergencyLoading] = useState(false);
   const [emergencyResult, setEmergencyResult] = useState(null);
@@ -100,7 +103,55 @@ export default function Home() {
         </Card>
       </div>
 
-      <div className="mt-5 grid gap-5 md:grid-cols-2">
+      <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <Card premium>
+          <CardHeader
+            title="בדיקת עומס / סטרס"
+            subtitle="Lambda tool — Stress Check-in Classifier (demo)"
+            action={<Activity className="h-5 w-5 text-teal-300" />}
+          />
+          {stressError && <ErrorAlert message={stressError} className="mb-3" />}
+          {stressResult ? (
+            <div className="space-y-2 text-sm text-slate-300">
+              <Badge category={stressResult.classification === "crisis" ? "safety" : "grounding"}>
+                {stressResult.classification}
+              </Badge>
+              <p>{stressResult.user_facing_summary}</p>
+              <p className="text-2xs text-slate-500">{stressResult.safety_disclaimer}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400">
+              מסווג עומס קוגניטיבי ומחזיר הנחיות ניתוב בטוחות ל-Agent.
+            </p>
+          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-4"
+            disabled={stressLoading}
+            onClick={async () => {
+              setStressLoading(true);
+              setStressError("");
+              try {
+                setStressResult(
+                  await fetchStressCheckIn({
+                    user_message: "אני ממש מוצף ולא מצליח לזכור מה לעשות",
+                    self_reported_stress_level: 8,
+                    confusion_level: 7,
+                    preferred_language: "he",
+                  })
+                );
+              } catch (e) {
+                setStressError(e.message);
+              } finally {
+                setStressLoading(false);
+              }
+            }}
+          >
+            {stressLoading ? "מסווג…" : "Stress Check-in (demo)"}
+          </Button>
+        </Card>
+
         <Card premium>
           <CardHeader
             title="סיכום שבועי"
@@ -141,14 +192,14 @@ export default function Home() {
           </Button>
         </Card>
 
-        <Card>
+        <Card className="opacity-90">
           <CardHeader
             title="תמיכה — איש קשר חירום"
-            subtitle="Amazon Connect demo — דורש אישור מפורש"
+            subtitle="אופציונלי / עתידי — Amazon Connect (לא נדרש)"
             action={<Phone className="h-5 w-5 text-amber-300" />}
           />
           <p className="text-sm leading-relaxed text-slate-400">
-            מפעיל שיחת תמיכה אוטומטית לאיש קשר שהגדרת.{" "}
+            הרחבה עתידית בלבד — שיחת תמיכה אוטומטית. לא נדרש להגשה.{" "}
             <strong className="text-amber-200/90">לא שירות חירום רפואי.</strong>
           </p>
           <Button

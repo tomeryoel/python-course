@@ -170,7 +170,7 @@ export default function Documents() {
             <strong className="text-accent-light">Bedrock Knowledge Base</strong>.
             ה-<strong className="text-accent-light">Bedrock Agent</strong> מבצע RAG ומפעיל
             Lambda tools. Flask קורא <code className="text-accent-light">invoke_agent</code>{" "}
-            בלבד — לא OpenSearch ישירות ולא FAISS מקומי.
+            בלבד — לא שאילתות וקטור ישירות ולא FAISS מקומי. אחסון וקטורי: S3 Vectors דרך Knowledge Base.
           </p>
           <Bot className="hidden h-5 w-5 text-accent/50 md:block" />
         </div>
