@@ -50,6 +50,38 @@ DISCLAIMER_LINE_PATTERNS = [
     re.compile(r"לפי המסמכים בלבד", re.I),
 ]
 
+# Keywords that mark a line/sentence as a medical safety disclaimer (Hebrew + English).
+# Used for near-duplicate detection after normalization.
+_DISCLAIMER_KEYWORDS = [
+    "לא כהנחיה רפואית",
+    "כהנחיה רפואית חדשה",
+    "לפי המסמכים שהועלו",
+    "לפי המסמכים בלבד",
+    "איני רופא",
+    "אינני רופא",
+    "אני לא רופא",
+    "פנה לפסיכיאטר",
+    "פני לפסיכיאטר",
+    "התייעץ עם הרופא",
+    "אל תשנה שום דבר לפני",
+    "not as new medical advice",
+    "based only on the uploaded documents",
+]
+
+
+def _normalize_disclaimer_text(text: str) -> str:
+    """Normalize a line for near-duplicate comparison: strip markdown, punctuation, spaces."""
+    t = text or ""
+    t = t.replace("*", "").replace("_", "").replace("`", "")  # markdown emphasis
+    t = t.replace("…", "")
+    t = re.sub(r"[.,:;!?\-–—()\"'\u05f3\u05f4]", " ", t)  # punctuation incl. Hebrew geresh
+    t = re.sub(r"\s+", " ", t)
+    return t.strip().lower()
+
+
+def _is_disclaimer_line(normalized: str) -> bool:
+    return any(_normalize_disclaimer_text(kw) in normalized for kw in _DISCLAIMER_KEYWORDS)
+
 
 def detect_locale(question: str) -> str:
     text = (question or "").strip()
@@ -90,10 +122,15 @@ def normalize_disclaimers(answer: str, locale: str) -> str:
 
 
 def dedupe_disclaimer_lines(answer: str, locale: str) -> str:
-    """Keep at most one medication disclaimer sentence in the answer."""
+    """
+    Keep at most one medical safety disclaimer in the answer.
+
+    Catches near-duplicates (bold markdown, punctuation, spaces, ellipsis, Hebrew
+    variants) by normalizing each line before comparison. The first disclaimer line
+    is preserved verbatim; later disclaimer-like lines are removed.
+    """
     if not answer:
         return answer
-    target = medication_disclaimer(locale)
     lines = answer.split("\n")
     kept: list[str] = []
     disclaimer_seen = False
@@ -102,12 +139,12 @@ def dedupe_disclaimer_lines(answer: str, locale: str) -> str:
         if not stripped:
             kept.append(line)
             continue
-        is_disclaimer = any(p.search(stripped) for p in DISCLAIMER_LINE_PATTERNS)
-        if is_disclaimer:
+        normalized = _normalize_disclaimer_text(stripped)
+        if _is_disclaimer_line(normalized):
             if disclaimer_seen:
                 continue
             disclaimer_seen = True
-            kept.append(target)
+            kept.append(line)
         else:
             kept.append(line)
     return "\n".join(kept).strip()

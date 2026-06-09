@@ -1,11 +1,16 @@
+import { forwardRef } from "react";
 import { cn } from "../../lib/cn";
 import SourcesAccordion from "./SourcesAccordion";
 
-export default function MessageBubble({ role, text, sources }) {
+const MessageBubble = forwardRef(function MessageBubble(
+  { role, text, sources },
+  ref
+) {
   const isUser = role === "user";
 
   return (
     <div
+      ref={ref}
       className={cn(
         "animate-fade-in w-full",
         isUser ? "flex justify-end" : "flex justify-start"
@@ -26,4 +31,6 @@ export default function MessageBubble({ role, text, sources }) {
       </div>
     </div>
   );
-}
+});
+
+export default MessageBubble;

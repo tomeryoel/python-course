@@ -87,6 +87,48 @@ def test_dedupe_disclaimer_lines():
     assert once.count("לא כהנחיה רפואית") == 1
 
 
+def test_two_identical_disclaimers_reduced_to_one():
+    answer = (
+        "מידע על התרופה.\n"
+        "לפי המסמכים שהועלו בלבד, ולא כהנחיה רפואית חדשה…\n"
+        "לפי המסמכים שהועלו בלבד, ולא כהנחיה רפואית חדשה…"
+    )
+    once = dedupe_disclaimer_lines(answer, "he")
+    assert once.count("כהנחיה רפואית") == 1
+
+
+def test_two_near_duplicate_disclaimers_reduced_to_one():
+    answer = (
+        "מידע על התרופה.\n"
+        "**לפי המסמכים שהועלו בלבד, ולא כהנחיה רפואית חדשה.**\n"
+        "לפי המסמכים שהועלו בלבד — ולא כהנחיה רפואית חדשה"
+    )
+    once = dedupe_disclaimer_lines(answer, "he")
+    assert once.count("כהנחיה רפואית") == 1
+
+
+def test_non_medication_answer_unchanged():
+    answer = "תרגיל קרקוע 5-4-3-2-1 יכול לעזור כשמרגישים הצפה."
+    assert dedupe_disclaimer_lines(answer, "he") == answer
+    assert sanitize_agent_answer(answer, "מה זה קרקוע?", "he") == answer
+
+
+def test_medication_answer_keeps_one_disclaimer():
+    answer = "המינון של ציפרלקס לפי המסמך הוא 20 מ\"ג."
+    cleaned = sanitize_agent_answer(answer, "מה המינון של ציפרלקס?", "he")
+    assert cleaned.count("כהנחיה רפואית") == 1
+
+
+def test_doctor_referral_near_duplicate_deduped():
+    answer = (
+        "מידע על תרופה.\n"
+        "איני רופא, פנה לפסיכיאטר לפני שינוי.\n"
+        "**איני רופא — פנה לפסיכיאטר לפני כל שינוי**"
+    )
+    once = dedupe_disclaimer_lines(answer, "he")
+    assert once.lower().count("איני רופא") == 1
+
+
 def test_sanitize_agent_answer_combined():
     answer = (
         "ציפרלקס 20mg.\n"

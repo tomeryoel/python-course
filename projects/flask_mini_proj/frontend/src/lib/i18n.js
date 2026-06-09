@@ -62,6 +62,52 @@ const DISCLAIMER_VARIANTS = [
   "Based only on the uploaded documents",
 ];
 
+// Keywords marking a line as a medical safety disclaimer (Hebrew + English).
+const DISCLAIMER_KEYWORDS = [
+  "לא כהנחיה רפואית",
+  "כהנחיה רפואית חדשה",
+  "לפי המסמכים שהועלו",
+  "לפי המסמכים בלבד",
+  "איני רופא",
+  "אינני רופא",
+  "אני לא רופא",
+  "פנה לפסיכיאטר",
+  "פני לפסיכיאטר",
+  "אל תשנה שום דבר לפני",
+  "not as new medical advice",
+  "based only on the uploaded documents",
+];
+
+function normalizeDisclaimerText(text = "") {
+  return text
+    .replace(/[*_`]/g, "")
+    .replace(/…/g, "")
+    .replace(/[.,:;!?\-–—()"'\u05f3\u05f4]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function isDisclaimerLine(line) {
+  const norm = normalizeDisclaimerText(line);
+  return DISCLAIMER_KEYWORDS.some((kw) => norm.includes(normalizeDisclaimerText(kw)));
+}
+
+/** Keep at most one medical disclaimer line, catching near-duplicates. */
+function dedupeDisclaimerLines(answer) {
+  const lines = answer.split("\n");
+  let seen = false;
+  const kept = [];
+  for (const line of lines) {
+    if (line.trim() && isDisclaimerLine(line)) {
+      if (seen) continue;
+      seen = true;
+    }
+    kept.push(line);
+  }
+  return kept.join("\n").trim();
+}
+
 /** Normalize medication disclaimer in assistant text to match locale */
 export function normalizeAnswerDisclaimers(answer, locale = LOCALES.he) {
   if (!answer) return answer;
@@ -82,7 +128,8 @@ export function normalizeAnswerDisclaimers(answer, locale = LOCALES.he) {
     result = `${result.trim()}\n\n${target}`;
   }
 
-  return result;
+  // Final safety net: ensure the disclaimer appears at most once (near-dupe aware).
+  return dedupeDisclaimerLines(result);
 }
 
 export const strings = {
