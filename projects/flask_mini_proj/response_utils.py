@@ -7,6 +7,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from source_utils import strip_opaque_source_citations_from_answer
+
 LOCALE_HE = "he"
 LOCALE_EN = "en"
 
@@ -34,9 +36,51 @@ MEDICATION_KEYWORDS = re.compile(
 DISCLAIMER_VARIANTS = [
     HEBREW_DISCLAIMER_MED,
     "לפי המסמכים בלבד ולא כהנחיה רפואית חדשה.",
+    "ולא כהנחיה רפואית חדשה",
+    "ולא כהנחיה רפואית חדשה.",
     ENGLISH_DISCLAIMER_MED,
     "Based only on the uploaded documents",
 ]
+
+DISCLAIMER_LINE_PATTERNS = [
+    re.compile(r"לא כהנחיה רפואית", re.I),
+    re.compile(r"not as new medical advice", re.I),
+    re.compile(r"Based only on the uploaded documents", re.I),
+    re.compile(r"לפי המסמכים שהועלו", re.I),
+    re.compile(r"לפי המסמכים בלבד", re.I),
+]
+
+# Keywords that mark a line/sentence as a medical safety disclaimer (Hebrew + English).
+# Used for near-duplicate detection after normalization.
+_DISCLAIMER_KEYWORDS = [
+    "לא כהנחיה רפואית",
+    "כהנחיה רפואית חדשה",
+    "לפי המסמכים שהועלו",
+    "לפי המסמכים בלבד",
+    "איני רופא",
+    "אינני רופא",
+    "אני לא רופא",
+    "פנה לפסיכיאטר",
+    "פני לפסיכיאטר",
+    "התייעץ עם הרופא",
+    "אל תשנה שום דבר לפני",
+    "not as new medical advice",
+    "based only on the uploaded documents",
+]
+
+
+def _normalize_disclaimer_text(text: str) -> str:
+    """Normalize a line for near-duplicate comparison: strip markdown, punctuation, spaces."""
+    t = text or ""
+    t = t.replace("*", "").replace("_", "").replace("`", "")  # markdown emphasis
+    t = t.replace("…", "")
+    t = re.sub(r"[.,:;!?\-–—()\"'\u05f3\u05f4]", " ", t)  # punctuation incl. Hebrew geresh
+    t = re.sub(r"\s+", " ", t)
+    return t.strip().lower()
+
+
+def _is_disclaimer_line(normalized: str) -> bool:
+    return any(_normalize_disclaimer_text(kw) in normalized for kw in _DISCLAIMER_KEYWORDS)
 
 
 def detect_locale(question: str) -> str:
@@ -77,14 +121,53 @@ def normalize_disclaimers(answer: str, locale: str) -> str:
     return result
 
 
-def apply_medication_disclaimer(answer: str, question: str, locale: str | None = None) -> str:
+def dedupe_disclaimer_lines(answer: str, locale: str) -> str:
+    """
+    Keep at most one medical safety disclaimer in the answer.
+
+    Catches near-duplicates (bold markdown, punctuation, spaces, ellipsis, Hebrew
+    variants) by normalizing each line before comparison. The first disclaimer line
+    is preserved verbatim; later disclaimer-like lines are removed.
+    """
+    if not answer:
+        return answer
+    lines = answer.split("\n")
+    kept: list[str] = []
+    disclaimer_seen = False
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            kept.append(line)
+            continue
+        normalized = _normalize_disclaimer_text(stripped)
+        if _is_disclaimer_line(normalized):
+            if disclaimer_seen:
+                continue
+            disclaimer_seen = True
+            kept.append(line)
+        else:
+            kept.append(line)
+    return "\n".join(kept).strip()
+
+
+def sanitize_agent_answer(answer: str, question: str, locale: str | None = None) -> str:
+    """Clean Agent answer: strip opaque source lines, dedupe disclaimers, add one if needed."""
     loc = locale or detect_locale(question)
-    if not (MEDICATION_KEYWORDS.search(question) or MEDICATION_KEYWORDS.search(answer)):
+    if not answer:
         return answer
-    disclaimer = medication_disclaimer(loc)
-    if disclaimer in answer:
-        return answer
-    return f"{answer.rstrip()}\n\n{disclaimer}"
+    result = strip_opaque_source_citations_from_answer(answer)
+    result = normalize_disclaimers(result, loc)
+    result = dedupe_disclaimer_lines(result, loc)
+    if MEDICATION_KEYWORDS.search(question) or MEDICATION_KEYWORDS.search(result):
+        if medication_disclaimer(loc) not in result:
+            result = f"{result.rstrip()}\n\n{medication_disclaimer(loc)}"
+        result = dedupe_disclaimer_lines(result, loc)
+    return result
+
+
+def apply_medication_disclaimer(answer: str, question: str, locale: str | None = None) -> str:
+    """Backward-compatible wrapper — prefer sanitize_agent_answer in /api/chat."""
+    return sanitize_agent_answer(answer, question, locale)
 
 
 def format_chat_response(result: dict[str, Any], question: str) -> dict[str, Any]:

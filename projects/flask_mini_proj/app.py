@@ -1,26 +1,26 @@
 """
 PTSD Companion — Flask API + React static frontend.
+
+Runtime architecture (primary):
+    React → Flask → boto3 bedrock-agent-runtime.invoke_agent()
+         → Bedrock Agent → Knowledge Base (S3) → Lambda Action Groups → response
+
+Local FAISS (rag_engine.py) is legacy/optional only — NOT used by /api/chat.
 """
 
 from __future__ import annotations
 
 import logging
 import os
-import uuid
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request, send_from_directory, session
+from flask import Flask, jsonify, request, send_from_directory
 
-from documents import DocumentError, list_documents, save_upload
-from memory import clear_conversation, get_conversation_history, init_db, save_message
-from rag_engine import (
-    answer_question,
-    get_index_status,
-    log_startup_status,
-    rebuild_index,
-    scan_data_files,
-)
-from response_utils import api_error, format_chat_response
+import chat_store
+from agent_engine import AGENT_CONFIG_ERROR, answer_with_agent, is_agent_configured
+from documents import DocumentError, save_upload
+from kb_status import get_knowledge_base_status, list_s3_documents
+from response_utils import api_error, detect_locale, sanitize_agent_answer
 from tasks import (
     TasksError,
     TasksFileError,
@@ -28,7 +28,22 @@ from tasks import (
     delete_task,
     extract_tasks_from_text,
     get_all_tasks,
+    get_tasks_path,
     update_task,
+)
+from tools import (
+    build_weekly_snapshot_payload,
+    invoke_emergency_call,
+    invoke_stress_check_in,
+    invoke_weekly_snapshot,
+)
+from json_utils import json_safe
+from weekly_context import (
+    build_weekly_app_context,
+    format_weekly_app_context_block,
+    is_task_context_request,
+    is_weekly_snapshot_request,
+    should_inject_app_context,
 )
 
 load_dotenv()
@@ -41,30 +56,19 @@ logger = logging.getLogger("ptsd.app")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static", "dist")
-MAX_QUESTION_LENGTH = 8000
+MAX_MESSAGE_LENGTH = 8000
+LEGACY_FAISS = os.getenv("ENABLE_LEGACY_FAISS", "false").lower() in ("1", "true", "yes")
 
 
-def _documents_payload() -> dict:
-    """Merge real files in data/ with the upload registry and index status."""
-    status = get_index_status()
-    sources = status.get("sources", {})
-    registry = {d.get("stored_name"): d for d in list_documents()}
-
-    documents = []
-    for f in scan_data_files():
-        reg = registry.get(f["name"])
-        documents.append({
-            "name": reg["name"] if reg else f["name"],
-            "stored_name": f["name"],
-            "type": f["type"],
-            "size_bytes": f["size_bytes"],
-            "modified": f["modified"],
-            "location": f["location"],
-            "indexed": f["name"] in sources,
-            "chunk_count": int(sources.get(f["name"], 0)),
-            "uploaded": bool(reg),
-        })
-    return {"documents": documents, "index": status, "status": "success"}
+def _log_startup() -> None:
+    kb = get_knowledge_base_status()
+    logger.info(
+        "[app] startup | runtime=bedrock_agent_kb agent=%s kb=%s s3=%s legacy_faiss=%s",
+        kb["agent_configured"],
+        kb["knowledge_base_configured"],
+        kb["s3_bucket_configured"],
+        LEGACY_FAISS,
+    )
 
 
 def create_app() -> Flask:
@@ -72,60 +76,210 @@ def create_app() -> Flask:
     app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-in-production")
     debug = os.getenv("FLASK_DEBUG", "false").lower() in ("1", "true", "yes")
 
-    init_db()
-    log_startup_status()
+    chat_store.init_db()
+    _log_startup()
 
-    @app.before_request
-    def ensure_session_id():
-        if "session_id" not in session:
-            session["session_id"] = str(uuid.uuid4())
-
-    # --- API ---
+    # --- Health & status ---
 
     @app.route("/health")
     def health():
-        kb = os.getenv("KNOWLEDGE_BASE_ID", "")
+        kb = get_knowledge_base_status()
         return jsonify({
             "status": "ok",
             "service": "PTSD Companion",
-            "knowledge_base_configured": bool(kb),
+            "runtime_mode": kb["runtime_mode"],
+            "agent_configured": kb["agent_configured"],
+            "knowledge_base_configured": kb["knowledge_base_configured"],
         })
+
+    @app.route("/api/knowledge-base/status")
+    def api_kb_status():
+        kb = get_knowledge_base_status()
+        s3_files, _ = list_s3_documents() if kb["s3_bucket_configured"] else ([], None)
+        return jsonify({"status": "success", **kb, "s3_documents": s3_files})
+
+    # --- Conversations (app-level memory) ---
+
+    @app.route("/api/conversations", methods=["GET"])
+    def api_conversations_list():
+        return jsonify({
+            "conversations": chat_store.list_conversations(),
+            "status": "success",
+        })
+
+    @app.route("/api/conversations", methods=["POST"])
+    def api_conversations_create():
+        data = request.get_json(silent=True) or {}
+        title = (data.get("title") or "שיחה חדשה").strip()
+        conv = chat_store.create_conversation(title=title)
+        return jsonify({"conversation": conv, "status": "success"}), 201
+
+    @app.route("/api/conversations/<conversation_id>", methods=["GET"])
+    def api_conversations_get(conversation_id):
+        conv = chat_store.get_conversation(conversation_id)
+        if not conv:
+            body, code = api_error("שיחה לא נמצאה.", code=404)
+            return jsonify(body), code
+        return jsonify({"conversation": conv, "status": "success"})
+
+    @app.route("/api/conversations/<conversation_id>", methods=["DELETE"])
+    def api_conversations_delete(conversation_id):
+        if chat_store.delete_conversation(conversation_id):
+            return jsonify({"message": "השיחה נמחקה.", "status": "success"})
+        body, code = api_error("שיחה לא נמצאה.", code=404)
+        return jsonify(body), code
+
+    # --- Chat (Bedrock Agent — primary path) ---
 
     @app.route("/api/chat", methods=["POST"])
     def api_chat():
         data = request.get_json(silent=True) or {}
-        question = (data.get("question") or "").strip()
+        message = (data.get("message") or data.get("question") or "").strip()
 
-        if not question:
+        if not message:
             body, code = api_error("נא להזין שאלה.", code=400)
             return jsonify(body), code
 
-        if len(question) > MAX_QUESTION_LENGTH:
-            question = question[:MAX_QUESTION_LENGTH]
+        if len(message) > MAX_MESSAGE_LENGTH:
+            message = message[:MAX_MESSAGE_LENGTH]
 
-        session_id = session["session_id"]
-        history = get_conversation_history(session_id)
-        save_message(session_id, "user", question)
+        if not is_agent_configured():
+            body, code = api_error(AGENT_CONFIG_ERROR, code=503)
+            return jsonify(body), code
 
-        try:
-            result = answer_question(question=question, conversation_history=history)
-        except ValueError as exc:
-            return jsonify(format_chat_response({
-                "answer": str(exc),
-                "sources": [],
-                "retrieved_context": "",
+        conversation_id = (data.get("conversation_id") or "").strip()
+        if not conversation_id:
+            conv = chat_store.create_conversation(
+                title=message[:60] + ("…" if len(message) > 60 else "")
+            )
+            conversation_id = conv["conversation_id"]
+        elif not chat_store.get_conversation(conversation_id):
+            body, code = api_error("שיחה לא נמצאה.", code=404)
+            return jsonify(body), code
+
+        conv = chat_store.get_conversation(conversation_id)
+        agent_session_id = conv.get("agent_session_id") if conv else None
+        memory_context = chat_store.get_recent_messages(conversation_id, limit=6)
+
+        chat_store.add_message(conversation_id, "user", message)
+
+        locale = detect_locale(message)
+        weekly = is_weekly_snapshot_request(message)
+        task_context = is_task_context_request(message)
+        agent_input = message
+        context_meta: dict = {}
+
+        if should_inject_app_context(message):
+            lang = "en" if locale == "en" else "he"
+            ctx = build_weekly_app_context(conversation_id, language=lang)
+            context_meta = {
+                "tasks_path": ctx.get("tasks_path"),
+                "tasks_file_exists": ctx.get("tasks_file_exists"),
+                "completed_tasks_count": ctx.get("completed_tasks_count"),
+                "open_tasks_count": ctx.get("open_tasks_count"),
+                "recent_topics": ctx.get("recent_topics"),
+            }
+            agent_input = message + format_weekly_app_context_block(ctx)
+
+        logger.info(
+            "[app] chat | conv=%s locale=%s backend=bedrock_agent weekly=%s task_context=%s "
+            "tasks_path=%s tasks_file_exists=%s completed_tasks_count=%s open_tasks_count=%s "
+            "recent_topics=%s app_context_appended=%s final_agent_input_len=%s",
+            conversation_id[:12],
+            locale,
+            weekly,
+            task_context,
+            context_meta.get("tasks_path", get_tasks_path() if should_inject_app_context(message) else "-"),
+            context_meta.get("tasks_file_exists", False),
+            context_meta.get("completed_tasks_count", 0),
+            context_meta.get("open_tasks_count", 0),
+            context_meta.get("recent_topics", []),
+            agent_input != message,
+            len(agent_input),
+        )
+
+        result = answer_with_agent(
+            message=agent_input,
+            conversation_id=conversation_id,
+            memory_context=memory_context,
+            agent_session_id=agent_session_id,
+        )
+
+        if result.get("status") != "success":
+            return jsonify({
                 "status": "error",
-            }, question)), 503
+                "error": result.get("message", "שגיאה ב-Agent"),
+                "conversation_id": conversation_id,
+            }), 503
 
-        formatted = format_chat_response(result, question)
-        save_message(session_id, "assistant", formatted.get("answer", ""))
+        answer = sanitize_agent_answer(result["answer"], message, locale)
+        chat_store.add_message(conversation_id, "assistant", answer)
+        chat_store.update_conversation_summary(
+            conversation_id,
+            last_user_question=message,
+            last_assistant_answer=answer,
+            title=message[:60] + ("…" if len(message) > 60 else ""),
+        )
 
-        return jsonify(formatted)
+        return jsonify(json_safe({
+            "status": "success",
+            "answer": answer,
+            "conversation_id": conversation_id,
+            "agent_session_id": result.get("agent_session_id"),
+            "last_user_question": message,
+            "sources": result.get("sources", []),
+            "tool_calls": result.get("tool_calls", []),
+            "trace_summary": result.get("trace_summary", []),
+            "locale": locale,
+        }))
 
     @app.route("/api/clear", methods=["POST"])
     def api_clear():
-        clear_conversation(session["session_id"])
-        return jsonify({"message": "השיחה נמחקה.", "status": "success"})
+        data = request.get_json(silent=True) or {}
+        cid = (data.get("conversation_id") or "").strip()
+        if cid and chat_store.delete_conversation(cid):
+            return jsonify({"message": "השיחה נמחקה.", "status": "success"})
+        return jsonify({"message": "אין שיחה פעילה.", "status": "success"})
+
+    # --- MCP-style tools (optional direct Lambda demo endpoints) ---
+
+    @app.route("/api/tools/weekly-snapshot", methods=["POST"])
+    def api_weekly_snapshot():
+        data = request.get_json(silent=True) or {}
+        language = (data.get("language") or "he").strip()
+        try:
+            tasks = get_all_tasks()
+        except TasksFileError as exc:
+            body, code = api_error(str(exc), code=500)
+            return jsonify(body), code
+        payload = data if data.get("completed_tasks") else build_weekly_snapshot_payload(tasks, language)
+        result = invoke_weekly_snapshot(payload)
+        return jsonify({"status": "success", "snapshot": result})
+
+    @app.route("/api/tools/stress-check-in", methods=["POST"])
+    def api_stress_check_in():
+        """Demo only — normal chat uses Agent Action Group via invoke_agent."""
+        data = request.get_json(silent=True) or {}
+        result = invoke_stress_check_in(data)
+        code = 200 if result.get("classification") else 400
+        return jsonify({"status": "success", "classifier": result}), code
+
+    @app.route("/api/tools/emergency-call", methods=["POST"])
+    def api_emergency_call():
+        data = request.get_json(silent=True) or {}
+        if not data.get("confirmed"):
+            return jsonify({
+                "status": "confirmation_required",
+                "message": (
+                    "Emergency contact call requires explicit user confirmation. "
+                    "שיחת חירום דורשת אישור מפורש מהמשתמש."
+                ),
+            }), 400
+        result = invoke_emergency_call(data)
+        code = 200 if result.get("status") in ("call_started", "success") else 400
+        return jsonify({"status": "success", "result": result}), code
+
+    # --- Tasks ---
 
     @app.route("/api/tasks", methods=["GET"])
     def api_tasks_list():
@@ -183,11 +337,7 @@ def create_app() -> Flask:
             return jsonify(body), code
         try:
             added = extract_tasks_from_text(document_text, source_name)
-            return jsonify({
-                "tasks": added,
-                "count": len(added),
-                "status": "success",
-            })
+            return jsonify({"tasks": added, "count": len(added), "status": "success"})
         except TasksError as exc:
             body, code = api_error(str(exc), code=400)
             return jsonify(body), code
@@ -198,13 +348,31 @@ def create_app() -> Flask:
             body, code = api_error("שגיאה בחילוץ משימות. נסה שוב מאוחר יותר.", code=500)
             return jsonify(body), code
 
+    # --- Documents (S3 + KB status; legacy FAISS optional) ---
+
     @app.route("/api/documents", methods=["GET"])
     def api_documents_list():
-        try:
-            return jsonify(_documents_payload())
-        except DocumentError as exc:
-            body, code = api_error(str(exc), code=500)
-            return jsonify(body), code
+        kb = get_knowledge_base_status()
+        s3_files, s3_err = list_s3_documents() if kb["s3_bucket_configured"] else ([], None)
+        payload = {
+            "status": "success",
+            "runtime_mode": kb["runtime_mode"],
+            "knowledge_base": kb,
+            "s3_documents": s3_files,
+            "s3_error": s3_err,
+        }
+        if LEGACY_FAISS:
+            try:
+                from rag_engine import get_index_status, scan_data_files
+
+                payload["legacy_faiss"] = {
+                    "enabled": True,
+                    "index": get_index_status(),
+                    "local_files": scan_data_files(),
+                }
+            except Exception as exc:  # noqa: BLE001
+                payload["legacy_faiss"] = {"enabled": True, "error": str(exc)}
+        return jsonify(payload)
 
     @app.route("/api/documents/upload", methods=["POST"])
     def api_documents_upload():
@@ -220,63 +388,43 @@ def create_app() -> Flask:
             body, code = api_error("שגיאה בהעלאת הקובץ. נסה שוב.", code=500)
             return jsonify(body), code
 
-        # File is under data/ — rebuild the FAISS index so it becomes searchable now.
-        indexing_status = "completed"
-        message = "הקובץ הועלה והאינדקס נבנה מחדש בהצלחה."
-        try:
-            result = rebuild_index()
-            doc["status"] = "indexed"
-            message = (
-                f"הקובץ הועלה והאינדקס נבנה מחדש ({result.get('chunk_count', 0)} קטעים)."
-            )
-        except Exception as exc:  # noqa: BLE001 - upload succeeded, indexing did not
-            logger.warning("[app] upload succeeded but rebuild failed: %s", exc)
-            indexing_status = "rebuild_needed"
-            message = "הקובץ הועלה, אך נדרשת בנייה מחדש של האינדקס (לחץ 'בנה אינדקס מחדש')."
-
         return jsonify({
             "document": doc,
-            "indexing_status": indexing_status,
-            "message": message,
-            "index": get_index_status(),
+            "message": (
+                "הקובץ נשמר מקומית. ל-RAG בפרודקשן: העלה ל-S3 והפעל סנכרון Knowledge Base."
+            ),
+            "indexing_status": "s3_kb_sync_required",
             "status": "success",
         }), 201
 
-    @app.route("/api/index/status", methods=["GET"])
-    def api_index_status():
-        return jsonify({"index": get_index_status(), "status": "success"})
+    # Legacy FAISS endpoints (optional, disabled by default)
+    if LEGACY_FAISS:
+        from rag_engine import get_index_status, rebuild_index
 
-    @app.route("/api/index/rebuild", methods=["POST"])
-    def api_index_rebuild():
-        try:
-            result = rebuild_index()
-        except Exception as exc:  # noqa: BLE001
-            logger.error("[app] index rebuild failed: %s", exc)
-            body, code = api_error(f"בניית האינדקס נכשלה: {exc}", code=500)
-            return jsonify(body), code
+        @app.route("/api/index/status", methods=["GET"])
+        def api_index_status():
+            return jsonify({"index": get_index_status(), "status": "success", "legacy": True})
 
-        if result.get("chunk_count", 0) == 0:
-            body, code = api_error(
-                "לא נוצרו קטעים — ודא שקיימים מסמכים נתמכים (PDF/DOCX/TXT) בתיקיית data/.",
-                code=400,
-            )
-            body["index"] = get_index_status()
-            body["errors"] = result.get("errors", [])
-            return jsonify(body), code
-
-        return jsonify({
-            "message": f"האינדקס נבנה מחדש ({result.get('chunk_count', 0)} קטעים).",
-            "result": result,
-            "index": get_index_status(),
-            "status": "success",
-        })
+        @app.route("/api/index/rebuild", methods=["POST"])
+        def api_index_rebuild():
+            try:
+                result = rebuild_index()
+                return jsonify({
+                    "message": f"Legacy FAISS rebuilt ({result.get('chunk_count', 0)} chunks).",
+                    "result": result,
+                    "index": get_index_status(),
+                    "status": "success",
+                    "legacy": True,
+                })
+            except Exception as exc:  # noqa: BLE001
+                body, code = api_error(str(exc), code=500)
+                return jsonify(body), code
 
     # --- React SPA ---
 
     @app.route("/assets/<path:filename>")
     def serve_assets(filename):
-        folder = os.path.join(STATIC_DIR, "assets")
-        return send_from_directory(folder, filename)
+        return send_from_directory(os.path.join(STATIC_DIR, "assets"), filename)
 
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")

@@ -1,0 +1,15 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InvokeDemoLambdaTools",
+      "Effect": "Allow",
+      "Action": ["lambda:InvokeFunction"],
+      "Resource": [
+        "arn:aws:lambda:*:*:function:ptsd-weekly-wellness-snapshot",
+        "arn:aws:lambda:*:*:function:ptsd-stress-check-in-classifier",
+        "arn:aws:lambda:*:*:function:ptsd-emergency-contact-voice-call"
+      ]
+    }
+  ]
+}

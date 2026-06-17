@@ -5,20 +5,115 @@ export async function healthCheck() {
   return res.json();
 }
 
-export async function sendChat(question) {
+export async function sendChat(message, conversationId = null) {
+  const body = { message };
+  if (conversationId) body.conversation_id = conversationId;
+
   const res = await fetch(`${API}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ question }),
+    body: JSON.stringify(body),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "שגיאה בשליחה");
+  if (!res.ok) throw new Error(data.error || data.message || "שגיאה בשליחה");
   return data;
 }
 
-export async function clearChat() {
-  await fetch(`${API}/api/clear`, { method: "POST", credentials: "include" });
+export async function clearChat(conversationId) {
+  await fetch(`${API}/api/clear`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ conversation_id: conversationId }),
+  });
+}
+
+export async function fetchConversations() {
+  const res = await fetch(`${API}/api/conversations`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "שגיאה בטעינת שיחות");
+  return data.conversations || [];
+}
+
+export async function createConversation(title = "שיחה חדשה") {
+  const res = await fetch(`${API}/api/conversations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "שגיאה");
+  return data.conversation;
+}
+
+export async function fetchConversation(id) {
+  const res = await fetch(`${API}/api/conversations/${id}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "שיחה לא נמצאה");
+  return data.conversation;
+}
+
+export async function fetchKnowledgeBaseStatus() {
+  const res = await fetch(`${API}/api/knowledge-base/status`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "שגיאה");
+  return data;
+}
+
+export async function fetchDocuments() {
+  const res = await fetch(`${API}/api/documents`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "שגיאה בטעינת מסמכים");
+  return data;
+}
+
+export async function uploadDocument(file, onProgress) {
+  const formData = new FormData();
+  formData.append("file", file);
+  onProgress?.(30);
+  const res = await fetch(`${API}/api/documents/upload`, {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+  });
+  onProgress?.(90);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "שגיאה בהעלאה");
+  onProgress?.(100);
+  return data;
+}
+
+export async function fetchStressCheckIn(payload = {}) {
+  const res = await fetch(`${API}/api/tools/stress-check-in`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "שגיאה");
+  return data.classifier;
+}
+
+export async function fetchWeeklySnapshot(language = "he") {
+  const res = await fetch(`${API}/api/tools/weekly-snapshot`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ language }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "שגיאה");
+  return data.snapshot;
+}
+
+export async function triggerEmergencyCall(confirmed, extra = {}) {
+  const res = await fetch(`${API}/api/tools/emergency-call`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ confirmed, ...extra }),
+  });
+  const data = await res.json();
+  return data;
 }
 
 export async function fetchTasks() {
@@ -69,52 +164,5 @@ export async function extractTasks(documentText, sourceName) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "שגיאה בחילוץ");
-  return data;
-}
-
-export async function uploadDocument(file, onProgress) {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const tick = (n) => onProgress?.(n);
-  tick(20);
-
-  const res = await fetch(`${API}/api/documents/upload`, {
-    method: "POST",
-    body: formData,
-    credentials: "include",
-  });
-
-  tick(80);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "שגיאה בהעלאה");
-
-  tick(100);
-  return {
-    document: data.document,
-    indexingStatus: data.indexing_status,
-    index: data.index,
-    message: data.message,
-  };
-}
-
-export async function fetchDocuments() {
-  const res = await fetch(`${API}/api/documents`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "שגיאה בטעינת מסמכים");
-  return { documents: data.documents || [], index: data.index || null };
-}
-
-export async function fetchIndexStatus() {
-  const res = await fetch(`${API}/api/index/status`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "שגיאה בטעינת סטטוס האינדקס");
-  return data.index;
-}
-
-export async function rebuildIndex() {
-  const res = await fetch(`${API}/api/index/rebuild`, { method: "POST" });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "בניית האינדקס נכשלה");
   return data;
 }

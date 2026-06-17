@@ -1,0 +1,7 @@
+{
+  "emergency_contact_phone": "+972501234567",
+  "user_display_name": "Tomer",
+  "trigger_reason": "User confirmed emergency contact call",
+  "language": "he",
+  "confirmed": true
+}

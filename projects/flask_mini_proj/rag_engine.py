@@ -1,38 +1,12 @@
 """
-PTSD Companion — Local FAISS RAG engine + Amazon Bedrock Runtime generation.
+PTSD Companion — LEGACY local FAISS RAG engine (optional fallback only).
 
-ARCHITECTURE (runtime)
-----------------------
-    User question
-      → Flask backend (/api/chat)
-      → local embedding of the question (TF-IDF by default, sentence-transformers optional)
-      → local FAISS cosine similarity search over document chunks
-      → top-k relevant chunks
-      → prompt construction (context + open tasks + safety rules)
-      → Amazon Bedrock Runtime `converse` (boto3) for the final answer
-      → answer returned to the React frontend
+NOT USED BY /api/chat in the final architecture.
+Primary runtime: agent_engine.py → bedrock-agent-runtime.invoke_agent()
+  → Bedrock Agent → Knowledge Base (S3) → Lambda Action Groups.
 
-EMBEDDING BACKENDS
-------------------
-Selected via the EMBEDDING_BACKEND environment variable:
-
-  * "tfidf"                 → scikit-learn TfidfVectorizer (default, lightweight,
-                              no torch, Windows/Docker/CI friendly).
-  * "sentence_transformers" → multilingual transformer embeddings (preferred for
-                              production quality; requires the optional heavy deps
-                              in requirements-ml.txt).
-
-WHY OPENSEARCH / BEDROCK KNOWLEDGE BASE WAS REMOVED FROM RUNTIME
----------------------------------------------------------------
-The previous implementation retrieved context with `bedrock-agent-runtime.retrieve()`,
-backed by a Bedrock Knowledge Base on **OpenSearch Serverless**, which bills continuously
-even when idle. Retrieval is now done **locally with FAISS** (free, in-memory), while final
-text generation still uses **Bedrock Runtime** (pay-per-request only). The Bedrock Knowledge
-Base resource may still exist in AWS for assignment screenshots/demo — see bedrock_kb_demo.py.
-
-Heavy/optional imports (numpy / faiss / sklearn / sentence-transformers / pypdf / docx) are
-imported lazily inside functions so the Flask app and unit tests import cleanly even when an
-optional backend is not installed.
+Enable only with ENABLE_LEGACY_FAISS=true for local dev experiments.
+See requirements-legacy-faiss.txt for dependencies.
 """
 
 from __future__ import annotations

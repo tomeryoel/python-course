@@ -1,0 +1,7 @@
+# Legacy local FAISS retrieval (ENABLE_LEGACY_FAISS=true only).
+# NOT used by /api/chat in the Bedrock Agent architecture.
+numpy==2.1.3
+faiss-cpu==1.9.0
+scikit-learn==1.5.2
+pypdf==5.1.0
+python-docx==1.1.2
