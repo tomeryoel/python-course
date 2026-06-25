@@ -1,0 +1,30 @@
+﻿Title: Suspicious Login Alert
+Date: 2026-06-21
+Source System: SIEM
+Alert ID: SIEM-88421
+User Account: maya.levi@company.com
+Organization: Amdocs
+
+Alert Description:
+The SIEM detected multiple failed login attempts followed by a successful login to the user account maya.levi@company.com.
+The successful login came from an unusual geographic location and an IP address not previously associated with the user.
+
+Indicators:
+Username: maya.levi@company.com
+Source IP: 45.77.18.203
+Country: Unknown
+Failed Login Attempts: 14
+Successful Login Time: 2026-06-21 02:43 UTC
+Target Application: Corporate VPN
+
+Initial Assessment:
+The login pattern may indicate a brute-force attempt or compromised credentials.
+The login occurred outside the user's normal working hours.
+Further investigation is required to confirm whether the activity was legitimate.
+
+Recommended Actions:
+Temporarily suspend the user session.
+Contact the user to verify the login.
+Reset the account password.
+Review VPN logs for related activity.
+Enable MFA enforcement if not already active.

@@ -1,0 +1,33 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables and secrets
+.env
+*.env
+*.key
+*.pem
+*secret*
+*credentials*
+
+# Temporary Office files
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# Local n8n data
+.n8n/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

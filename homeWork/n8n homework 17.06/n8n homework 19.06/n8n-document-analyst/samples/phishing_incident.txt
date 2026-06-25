@@ -1,0 +1,26 @@
+﻿Title: Phishing Email Investigation
+Date: 2026-06-19
+Reported By: SOC Analyst Team
+Affected User: David Cohen
+Organization: Amdocs
+
+Incident Description:
+A suspicious email was reported by David Cohen from the Finance department.
+The email claimed to come from Microsoft Support and requested the user to verify his password using an external login page.
+
+Indicators of Compromise:
+Sender Email: support@microsoft-security-check.com
+Suspicious Domain: microsoft-login-verification.net
+Source IP: 185.23.44.91
+Affected Mailbox: david.cohen@company.com
+
+Initial Analysis:
+The message appears to be a phishing attempt designed to steal user credentials.
+The domain is not associated with Microsoft and was registered recently.
+No credential submission was confirmed at this stage.
+
+Recommended Actions:
+Block the suspicious domain.
+Search for similar emails across all employee mailboxes.
+Reset the affected user's password as a precaution.
+Notify the Finance department about phishing awareness.

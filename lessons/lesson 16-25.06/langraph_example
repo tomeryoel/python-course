@@ -1,0 +1,10 @@
+           ┌──────────────────┐
+             │  classify_intent │
+             └───────┬──────────┘
+                     │
+    ┌────────────────┼────────────────────┬───────────────┐
+    │                │                    │               │
+technical        billing              content          unknown
+ (LLM)            (LLM)                 (LLM)             (LLM)
+    │                │                    │               │
+   END              END                  END             END
