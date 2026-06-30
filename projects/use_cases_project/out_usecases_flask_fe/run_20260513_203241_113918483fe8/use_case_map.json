@@ -1,0 +1,362 @@
+{
+  "0": {
+    "use_case": "Building Community Forums with Moderation Tools",
+    "description": "Create a small community forum platform equipped with essential moderation tools for managing user interactions and content.",
+    "keywords": [
+      "community forum",
+      "moderation tools",
+      "user management",
+      "online community",
+      "content moderation",
+      "forum building"
+    ]
+  },
+  "1": {
+    "use_case": "Optimizing Table View for MacBook Users",
+    "description": "Address user feedback regarding the difficult and painful experience of using the table view interface on MacBook laptops.",
+    "keywords": [
+      "table view",
+      "MacBook",
+      "UX feedback",
+      "interface optimization",
+      "usability",
+      "display issues"
+    ]
+  },
+  "2": {
+    "use_case": "Assessing Implementation Difficulty for New Features",
+    "description": "Users are inquiring about the complexity and effort required to add various functional modules and tracking features to the system.",
+    "keywords": [
+      "feature implementation",
+      "technical difficulty",
+      "adding notifications",
+      "custom modules",
+      "integration effort",
+      "system customization"
+    ]
+  },
+  "3": {
+    "use_case": "Influencer Sponsorship and Content Management System",
+    "description": "A platform to track sponsorship deals, manage content calendars, monitor analytics, and handle invoicing with deadline reminders.",
+    "keywords": [
+      "sponsorship deal tracker",
+      "content calendar",
+      "analytics links",
+      "invoice management",
+      "deadline reminders",
+      "asset library",
+      "influencer marketing"
+    ]
+  },
+  "4": {
+    "use_case": "Simplify and Declutter User Interface Design",
+    "description": "Users find the current interface overcrowded and are requesting a more streamlined and simplified design to improve usability.",
+    "keywords": [
+      "UI simplification",
+      "decluttering",
+      "user interface",
+      "UX improvement",
+      "minimalist design",
+      "crowded UI"
+    ]
+  },
+  "5": {
+    "use_case": "Timezone and UTC Offset Discrepancy Issues",
+    "description": "Users are reporting that timezone and UTC handling is broken, resulting in a two-hour offset compared to previous correct behavior.",
+    "keywords": [
+      "timezone handling",
+      "UTC offset",
+      "time discrepancy",
+      "broken timezones",
+      "two-hour offset",
+      "regression"
+    ]
+  },
+  "6": {
+    "use_case": "Mobile Header and List Overlap Issue",
+    "description": "Users are reporting a layout bug on mobile devices where the header overlaps with the list due to incorrect spacing.",
+    "keywords": [
+      "mobile spacing",
+      "header overlap",
+      "UI layout bug",
+      "mobile responsiveness",
+      "list overlap",
+      "spacing error"
+    ]
+  },
+  "7": {
+    "use_case": "Implementing Role-Based Access Control Systems",
+    "description": "Establish distinct permission levels for administrators and standard users to ensure secure and organized platform management.",
+    "keywords": [
+      "RBAC",
+      "user roles",
+      "admin permissions",
+      "access control",
+      "user management",
+      "security levels"
+    ]
+  },
+  "8": {
+    "use_case": "Comprehensive Audit Logs for Change Tracking",
+    "description": "Implement detailed audit logs to track who made specific changes and when they occurred for security and accountability.",
+    "keywords": [
+      "audit logs",
+      "change tracking",
+      "user accountability",
+      "security logs",
+      "history tracking",
+      "compliance"
+    ]
+  },
+  "9": {
+    "use_case": "Persistent 401 Unauthorized Errors for Authenticated Users",
+    "description": "Users are experiencing recurring 401 errors and authentication failures despite being successfully logged into the platform.",
+    "keywords": [
+      "401 error",
+      "unauthorized",
+      "authentication failure",
+      "logged in",
+      "session issue",
+      "broken login"
+    ]
+  },
+  "10": {
+    "use_case": "Service Booking and Logistics Management Apps",
+    "description": "Users aim to create simple applications for managing home service bookings, technician dispatching, inventory tracking, and shipment logistics efficiently.",
+    "keywords": [
+      "home services",
+      "technician dispatch",
+      "inventory tracking",
+      "shipment tracking",
+      "booking app",
+      "logistics management"
+    ]
+  },
+  "11": {
+    "use_case": "Improve Safari Browser Compatibility and Stability",
+    "description": "Users are requesting a seamless experience on Safari by resolving visual glitches and functional inconsistencies within the browser.",
+    "keywords": [
+      "Safari compatibility",
+      "browser glitches",
+      "UI stability",
+      "web performance",
+      "cross-browser testing"
+    ]
+  },
+  "12": {
+    "use_case": "Preference for Minimalist and Lightweight Design",
+    "description": "Users are requesting a clean, simple, and lightweight interface that avoids visual clutter and heavy design elements.",
+    "keywords": [
+      "minimalism",
+      "lightweight design",
+      "clean UI",
+      "simplicity",
+      "reduced clutter",
+      "user experience"
+    ]
+  },
+  "13": {
+    "use_case": "Managing Duplicate Records During Excel Imports",
+    "description": "Users are seeking guidance on identifying and resolving duplicate data entries when importing information from Excel spreadsheets into the system.",
+    "keywords": [
+      "Excel import",
+      "duplicate management",
+      "data deduplication",
+      "importing records",
+      "data integrity",
+      "spreadsheet upload"
+    ]
+  },
+  "14": {
+    "use_case": "Export Filtered Views to CSV Format",
+    "description": "Users require the ability to export their specific filtered data views into CSV files for external analysis or reporting.",
+    "keywords": [
+      "CSV export",
+      "filtered view",
+      "data portability",
+      "student users",
+      "report generation",
+      "spreadsheet integration"
+    ]
+  },
+  "15": {
+    "use_case": "Implement Dark Mode Interface Toggle",
+    "description": "Users are requesting a dark mode setting to improve visual comfort and customize the application's appearance.",
+    "keywords": [
+      "dark mode",
+      "user interface",
+      "theme toggle",
+      "visual comfort",
+      "night mode",
+      "display settings"
+    ]
+  },
+  "16": {
+    "use_case": "Verifying Row Level Security and Permissions",
+    "description": "Ensure sensitive data is protected by auditing Row Level Security settings and user access permissions for compliance.",
+    "keywords": [
+      "Row Level Security",
+      "RLS",
+      "data permissions",
+      "sensitive data protection",
+      "access control",
+      "security audit"
+    ]
+  },
+  "17": {
+    "use_case": "Basic Usage Stats and Conversion Funnels",
+    "description": "Implement core product analytics to track basic usage statistics and visualize user conversion through multi-step funnels.",
+    "keywords": [
+      "usage stats",
+      "conversion funnels",
+      "product analytics",
+      "user behavior",
+      "tracking",
+      "funnel analysis"
+    ]
+  },
+  "18": {
+    "use_case": "Enforcing Environment Variables for Secret Management",
+    "description": "Guidelines instructing developers to use environment variables instead of hardcoding sensitive secrets within the source code.",
+    "keywords": [
+      "secret management",
+      "environment variables",
+      "hardcoded secrets",
+      "security best practices",
+      "env vars",
+      "coding standards"
+    ]
+  },
+  "19": {
+    "use_case": "Persistent Login Redirect Loop Issues",
+    "description": "Users are experiencing a recurring redirect loop that sends them back to the login page immediately after attempting to sign in.",
+    "keywords": [
+      "login error",
+      "redirect loop",
+      "authentication failure",
+      "session issue",
+      "login page",
+      "user access"
+    ]
+  },
+  "20": {
+    "use_case": "Verifying CORS and Authentication Redirect Logic",
+    "description": "Users are requesting a review of CORS settings and redirect behavior during the authentication process to ensure security and functionality.",
+    "keywords": [
+      "CORS",
+      "authentication redirects",
+      "security verification",
+      "auth flow",
+      "redirect logic",
+      "cross-origin resource sharing"
+    ]
+  },
+  "21": {
+    "use_case": "Deploying Applications to Fly.io Managed Hosting",
+    "description": "Users prefer deploying their applications directly to Fly.io to avoid the complexities of self-hosting infrastructure.",
+    "keywords": [
+      "Fly.io",
+      "deployment",
+      "managed hosting",
+      "cloud infrastructure",
+      "no self-hosting",
+      "application deployment"
+    ]
+  },
+  "22": {
+    "use_case": "Enhancing Empty State Visual Design",
+    "description": "Redesign empty states to be more visually appealing and engaging for users instead of looking sad.",
+    "keywords": [
+      "empty states",
+      "UI design",
+      "visual enhancement",
+      "user experience",
+      "aesthetic improvement",
+      "interface design"
+    ]
+  },
+  "23": {
+    "use_case": "Integration with Existing Technology Stack",
+    "description": "Users are inquiring about the application's ability to connect and sync with their current databases, authentication providers, and backend services.",
+    "keywords": [
+      "OAuth integration",
+      "database connectivity",
+      "tech stack compatibility",
+      "Google OAuth",
+      "Postgres support",
+      "Firebase integration"
+    ]
+  },
+  "24": {
+    "use_case": "Urgent Requests for Immediate Support",
+    "description": "Users expressing frustration and seeking immediate assistance when they encounter obstacles or get stuck within the application.",
+    "keywords": [
+      "stuck",
+      "help",
+      "frustration",
+      "immediate assistance",
+      "support request",
+      "user blockage"
+    ]
+  },
+  "25": {
+    "use_case": "Planning Future Two-Factor Authentication Implementation",
+    "description": "Users are inquiring about the possibility of integrating two-factor authentication into their security roadmap for later implementation.",
+    "keywords": [
+      "2FA",
+      "security planning",
+      "future implementation",
+      "two-factor authentication",
+      "roadmap",
+      "authentication"
+    ]
+  },
+  "26": {
+    "use_case": "Enable Outbound Webhook Integrations",
+    "description": "Users are requesting the ability to send data to external services via outbound webhooks for better workflow automation.",
+    "keywords": [
+      "webhooks",
+      "outbound webhooks",
+      "external integration",
+      "data export",
+      "automation",
+      "API webhooks"
+    ]
+  },
+  "27": {
+    "use_case": "Blank Page Error After Saving Changes",
+    "description": "Users report a critical bug where clicking the save button results in a blank page and inconsistent tag saving.",
+    "keywords": [
+      "blank page",
+      "save button",
+      "data persistence",
+      "tag saving",
+      "critical bug",
+      "UI failure"
+    ]
+  },
+  "28": {
+    "use_case": "Ensuring Private Note Access Control",
+    "description": "Implement strict access controls to prevent unauthorized users from viewing or accessing private notes belonging to other individuals.",
+    "keywords": [
+      "private notes",
+      "data privacy",
+      "access control",
+      "user permissions",
+      "information security",
+      "confidentiality"
+    ]
+  },
+  "29": {
+    "use_case": "Filter Persistence Issues on Page Refresh",
+    "description": "Users report that active filters are automatically reset and lost whenever the page is refreshed, requiring manual reconfiguration.",
+    "keywords": [
+      "filter reset",
+      "page refresh",
+      "persistence bug",
+      "user interface",
+      "data filtering",
+      "bug report"
+    ]
+  }
+}

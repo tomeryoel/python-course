@@ -1,0 +1,31 @@
+Use Case,Description,Prompts,Visitors,Accounts,Retention,% Rage Prompts,cluster_id
+Influencer Sponsorship and Content Management System,"A platform to track sponsorship deals, manage content calendars, monitor analytics, and handle invoicing with deadline reminders.",1807,1367,489,0.281,1.8,3
+Service Booking and Logistics Management Apps,"Users aim to create simple applications for managing home service bookings, technician dispatching, inventory tracking, and shipment logistics efficiently.",1038,887,445,0.16,3.7,10
+Assessing Implementation Difficulty for New Features,Users are inquiring about the complexity and effort required to add various functional modules and tracking features to the system.,683,621,394,0.093,2.3,2
+Export Filtered Views to CSV Format,Users require the ability to export their specific filtered data views into CSV files for external analysis or reporting.,547,504,345,0.083,2.9,14
+Mobile Header and List Overlap Issue,Users are reporting a layout bug on mobile devices where the header overlaps with the list due to incorrect spacing.,482,437,309,0.101,3.3,6
+Persistent 401 Unauthorized Errors for Authenticated Users,Users are experiencing recurring 401 errors and authentication failures despite being successfully logged into the platform.,471,441,325,0.066,3.0,9
+Verifying CORS and Authentication Redirect Logic,Users are requesting a review of CORS settings and redirect behavior during the authentication process to ensure security and functionality.,350,336,253,0.042,1.7,20
+Integration with Existing Technology Stack,"Users are inquiring about the application's ability to connect and sync with their current databases, authentication providers, and backend services.",338,325,246,0.04,3.6,23
+Enable Outbound Webhook Integrations,Users are requesting the ability to send data to external services via outbound webhooks for better workflow automation.,311,297,235,0.044,1.0,26
+Enhancing Empty State Visual Design,Redesign empty states to be more visually appealing and engaging for users instead of looking sad.,308,286,218,0.07,1.3,22
+Deploying Applications to Fly.io Managed Hosting,Users prefer deploying their applications directly to Fly.io to avoid the complexities of self-hosting infrastructure.,305,287,234,0.063,2.6,21
+Persistent Login Redirect Loop Issues,Users are experiencing a recurring redirect loop that sends them back to the login page immediately after attempting to sign in.,278,269,208,0.03,2.5,19
+Timezone and UTC Offset Discrepancy Issues,"Users are reporting that timezone and UTC handling is broken, resulting in a two-hour offset compared to previous correct behavior.",250,239,193,0.046,0.4,5
+Blank Page Error After Saving Changes,Users report a critical bug where clicking the save button results in a blank page and inconsistent tag saving.,236,230,193,0.026,2.1,27
+Optimizing Table View for MacBook Users,Address user feedback regarding the difficult and painful experience of using the table view interface on MacBook laptops.,229,220,184,0.041,2.6,1
+Enforcing Environment Variables for Secret Management,Guidelines instructing developers to use environment variables instead of hardcoding sensitive secrets within the source code.,225,215,182,0.047,4.0,18
+Comprehensive Audit Logs for Change Tracking,Implement detailed audit logs to track who made specific changes and when they occurred for security and accountability.,210,208,183,0.01,1.4,8
+Implementing Role-Based Access Control Systems,Establish distinct permission levels for administrators and standard users to ensure secure and organized platform management.,204,200,171,0.02,3.4,7
+Simplify and Declutter User Interface Design,Users find the current interface overcrowded and are requesting a more streamlined and simplified design to improve usability.,198,194,163,0.021,2.5,4
+Managing Duplicate Records During Excel Imports,Users are seeking guidance on identifying and resolving duplicate data entries when importing information from Excel spreadsheets into the system.,188,185,164,0.016,2.1,13
+Basic Usage Stats and Conversion Funnels,Implement core product analytics to track basic usage statistics and visualize user conversion through multi-step funnels.,187,180,151,0.039,2.7,17
+Implement Dark Mode Interface Toggle,Users are requesting a dark mode setting to improve visual comfort and customize the application's appearance.,181,178,156,0.017,1.7,15
+Preference for Minimalist and Lightweight Design,"Users are requesting a clean, simple, and lightweight interface that avoids visual clutter and heavy design elements.",179,175,149,0.023,1.1,12
+Urgent Requests for Immediate Support,Users expressing frustration and seeking immediate assistance when they encounter obstacles or get stuck within the application.,157,154,142,0.019,1.9,24
+Improve Safari Browser Compatibility and Stability,Users are requesting a seamless experience on Safari by resolving visual glitches and functional inconsistencies within the browser.,148,147,130,0.007,4.1,11
+Building Community Forums with Moderation Tools,Create a small community forum platform equipped with essential moderation tools for managing user interactions and content.,114,113,103,0.009,4.4,0
+Verifying Row Level Security and Permissions,Ensure sensitive data is protected by auditing Row Level Security settings and user access permissions for compliance.,104,104,96,0.0,2.9,16
+Planning Future Two-Factor Authentication Implementation,Users are inquiring about the possibility of integrating two-factor authentication into their security roadmap for later implementation.,95,95,91,0.0,3.2,25
+Ensuring Private Note Access Control,Implement strict access controls to prevent unauthorized users from viewing or accessing private notes belonging to other individuals.,95,92,84,0.033,2.1,28
+Filter Persistence Issues on Page Refresh,"Users report that active filters are automatically reset and lost whenever the page is refreshed, requiring manual reconfiguration.",82,82,78,0.0,4.9,29
